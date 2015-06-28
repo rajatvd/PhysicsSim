@@ -7,10 +7,26 @@ public class Ball extends RigidBody{
 	
 	double r;
 	
+	public Ball(RigidBody a){
+		pos = new Vec(a.pos.x, a.pos.y);
+		vel = new Vec(a.vel.x, a.vel.y);
+		c = a.c;
+		invMass = a.invMass;
+		r = 1;
+	}
+	
 	public Ball(double xx, double yy, double rr){
 		pos = new Vec(xx,yy);
 		vel = new Vec(0,0);
 		r = rr;
+		c = Color.white;
+		invMass = 1;
+	}
+	
+	public Ball(){
+		pos = new Vec(0,0);
+		vel = new Vec(0,0);
+		r = 1;
 		c = Color.white;
 		invMass = 1;
 	}
@@ -58,7 +74,7 @@ public class Ball extends RigidBody{
 		else invMass = 1.0/masss;
 	}
 	
-	public void drawBall(Graphics g){
+	public void drawBody(Graphics g){
 		Color cc = g.getColor();
 		g.setColor(c);
 		g.fillOval((int)(pos.x-r),(int)(pos.y-r),

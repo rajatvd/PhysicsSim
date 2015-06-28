@@ -1,6 +1,7 @@
 package physicssim;
 
 import java.awt.Color;
+import java.awt.Graphics;
 
 public class RigidBody {
 
@@ -11,5 +12,13 @@ public class RigidBody {
 	
 	//color of body when drawn
 	Color c;
-
+	
+	public void drawBody(Graphics g){
+		
+	}
+	
+	public void update(){
+		
+	}
+	
 }

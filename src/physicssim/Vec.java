@@ -14,6 +14,19 @@ public class Vec {
 		x=0;y=0;z=0;
 	}
 	
+	public Vec(String s){
+		s = s.replace("(", "").replace(")", "");
+		String[] nums = s.split(",");
+		if(nums.length==2){
+			x=Double.parseDouble(nums[0]);
+			y=Double.parseDouble(nums[1]);
+		}else if(nums.length==3){
+			x=Double.parseDouble(nums[0]);
+			y=Double.parseDouble(nums[1]);
+			z=Double.parseDouble(nums[2]);
+		}
+	}
+	
 	public Vec(double xx, double yy, double zz){
 		x=xx;y=yy;z=zz;
 	}
@@ -127,7 +140,7 @@ public class Vec {
 	}
 	
 	public String toString(){
-		return "["+ x +", "+ y +", "+ z +"]";
+		return "("+ x +","+ y +","+ z +")";
 	}
 	
 }

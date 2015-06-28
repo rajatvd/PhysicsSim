@@ -9,7 +9,7 @@ import javax.swing.event.*;
 
 public class PhysicsSim implements ChangeListener{
 	
-	private static final String VERSION = "v1.1";
+	private static final String VERSION = "v1.2";
 	
 	//GUI fields
 	Image img;
@@ -18,7 +18,10 @@ public class PhysicsSim implements ChangeListener{
 	JFrame jf;
 	
 	//ball collection
-	Vector<Ball> balls = new Vector<Ball>();
+	Vector<RigidBody> bodies = new Vector<RigidBody>();
+	
+	//state object
+	State state = new State();
 	
 	//mouse vectors
 	Vec clickPos = new Vec(), end = new Vec();
@@ -62,7 +65,7 @@ public class PhysicsSim implements ChangeListener{
 	
 	JButton chooseColor = new JButton("Choose ball colour"),
 			chooseBGColor = new JButton("Choose background colour"),
-//			playPause = new JButton("Pause"),
+			playPause = new JButton("Pause"),
 			reset = new JButton("Reset"),
 			centerView = new JButton("Center View");
 
@@ -74,7 +77,16 @@ public class PhysicsSim implements ChangeListener{
 	
 	boolean isCreatingBall = false,//is left mouse button dragging?
 			drawMomentum = false,
-			walls = false;
+			walls = false,
+			running = true;//is not paused?
+	
+	//Menu fields
+	JMenuBar menubar = new JMenuBar();
+	
+	JMenu file = new JMenu("File");
+	
+	JMenuItem saveState = new JMenuItem("Save state"),
+			  loadState = new JMenuItem("Load state");
 	
 	Thread thread;
 	
@@ -103,7 +115,7 @@ public class PhysicsSim implements ChangeListener{
 			public void paintComponent(Graphics g){
 				clearImage(g2);
 				transform(g2);
-				drawBalls(g2);
+				drawBodies(g2);
 				g.drawImage(img, 0, 0, null);
 				if(walls){
 					Graphics2D gg = (Graphics2D)g;
@@ -136,21 +148,20 @@ public class PhysicsSim implements ChangeListener{
 		};
 		ballPreview.setPreferredSize(new Dimension(100,100));
 		
-//		gravity.setMajorTickSpacing(100);
-//		gravity.setPaintTicks(true);
-//		gravity.setPaintLabels(true);
-//		gravity.addChangeListener(this);
 		
-		//checkbox
+		//checkboxes
 		wallsCB.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e) {
 				walls = wallsCB.isSelected();
+				jf.repaint();
+				updateState();
 			}
 		});
 		
 		momentumCB.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e) {
 				drawMomentum = momentumCB.isSelected();
+				jf.repaint();
 			}
 		});
 		
@@ -164,6 +175,7 @@ public class PhysicsSim implements ChangeListener{
 		massSpinner = new JSpinner(new SpinnerNumberModel(10,-1,1000,1.0));
 		massSpinner.setPreferredSize(new Dimension(70,20));
 		massSpinner.addChangeListener(this);
+		
 		
 		//sliders
 		resti.setMajorTickSpacing(20);
@@ -181,6 +193,12 @@ public class PhysicsSim implements ChangeListener{
 		radiusS.setPaintLabels(true);
 		radiusS.addChangeListener(this);
 		
+//		gravity.setMajorTickSpacing(100);
+//		gravity.setPaintTicks(true);
+//		gravity.setPaintLabels(true);
+//		gravity.addChangeListener(this);
+		
+		
 		//buttons
 		chooseColor.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
@@ -192,19 +210,21 @@ public class PhysicsSim implements ChangeListener{
 				Color c = JColorChooser.showDialog(jf, "Choose ball colour", ballColor);
 				bgColor = new Color(c.getRed(),c.getGreen(),c.getBlue(),255-trail.getValue());
 				rawBG = c;
+				updateState();
 			}		
 		});
 		reset.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
-				balls.clear();
+				bodies.clear();
 				zoom=1;
 				pan.x=0;
 				pan.y=0;
+				jf.repaint();
 			}		
 		});
 		centerView.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
-				if(balls.size()==0){
+				if(bodies.size()==0){
 					pan.x=viewx/2 - wallx*zoom/2;
 					pan.y=viewy/2 - wally*zoom/2;
 				}else{
@@ -213,20 +233,52 @@ public class PhysicsSim implements ChangeListener{
 				}
 			}		
 		});
-//		playPause.addActionListener(new ActionListener(){
-//			public void actionPerformed(ActionEvent arg0) {
-//				if(playPause.getText().equals("Pause")){
-//					thread.suspend();
-//					playPause.setText("Play");
-//				}else if(playPause.getText().equals("Play")){
-//					thread.resume();
-//					playPause.setText("Pause");
-//				}
-//			}		
-//		});
+		playPause.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent arg0) {
+				if(playPause.getText().equals("Pause")){
+					running = false;
+					playPause.setText("Play");
+				}else if(playPause.getText().equals("Play")){
+					running = true;
+					playPause.setText("Pause");
+				}
+			}		
+		});
 		
 		
 		//Menu
+		
+		//adding the menus
+		menubar.add(file);
+		
+		//setting menubar of jf
+		jf.setJMenuBar(menubar);
+		
+		//adding menu items to the menus
+		file.add(saveState);
+		file.add(loadState);
+		
+		//event handling for menu items
+		saveState.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent arg0) {
+				boolean temp = running;
+				running = false;
+				updateState();
+				state.saveState();
+				running = temp;
+				jf.repaint();
+			}		
+		});
+		loadState.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent arg0) {
+				boolean temp = running;
+				running = false;
+				state.loadState();
+				putState();
+				running = temp;
+				jf.repaint();
+			}		
+		});
 		
 		
 		//Layout
@@ -242,7 +294,6 @@ public class PhysicsSim implements ChangeListener{
 						.addGroup(gl.createSequentialGroup()
 								.addComponent(reset)
 								.addComponent(centerView)
-//								.addComponent(playPause)
 								)
 						.addGroup(gl.createSequentialGroup()
 								.addComponent(gravityLab)
@@ -273,6 +324,7 @@ public class PhysicsSim implements ChangeListener{
 								)
 						.addComponent(chooseColor)
 						.addComponent(chooseBGColor)
+						.addComponent(playPause)
 						)
 				);
 		
@@ -286,7 +338,6 @@ public class PhysicsSim implements ChangeListener{
 						.addGroup(gl.createParallelGroup()
 								.addComponent(reset)
 								.addComponent(centerView)
-//								.addComponent(playPause)
 								)
 						.addGroup(gl.createParallelGroup()
 								.addComponent(gravityLab)
@@ -317,6 +368,7 @@ public class PhysicsSim implements ChangeListener{
 								)
 						.addComponent(chooseColor)
 						.addComponent(chooseBGColor)
+						.addComponent(playPause)
 						)
 				);
 		gl.setAutoCreateGaps(true);
@@ -344,7 +396,7 @@ public class PhysicsSim implements ChangeListener{
 				}else{
 					isCreatingBall = true;
 				}
-//				image.repaint();
+				jf.repaint();
 			}
 			
 			public void mouseReleased(MouseEvent e){
@@ -355,7 +407,7 @@ public class PhysicsSim implements ChangeListener{
 				if(SwingUtilities.isLeftMouseButton(e)){
 					Vec pos = invTransform(clickPos);
 					Vec vel = new Vec(e.getX(), e.getY()).minus(clickPos).scale(0.1/zoom);
-					balls.add(new Ball(pos, 
+					bodies.add(new Ball(pos, 
 							vel,
 							radius, 
 							mass,
@@ -363,6 +415,8 @@ public class PhysicsSim implements ChangeListener{
 				}
 				clickPos.x = 0;clickPos.y = 0;
 				end.x = 0;end.y = 0;
+				updateState();
+				jf.repaint();
 			}
 			
 			public void mouseWheelMoved(MouseWheelEvent e){
@@ -376,6 +430,7 @@ public class PhysicsSim implements ChangeListener{
 				Vec mousePos = new Vec(e.getX(),e.getY()).minus(pan);
 				pan.subtract(mousePos.scaleV(newZoom/zoom).minus(mousePos));
 				zoom=newZoom;
+				jf.repaint();
 			}
 		};
 		
@@ -383,19 +438,23 @@ public class PhysicsSim implements ChangeListener{
 		image.addMouseMotionListener(mouse);
 		image.addMouseWheelListener(mouse);
 		
+		//initialising the state object
+		updateState();
+		
 		//simulation thread
 		thread = new Thread(new Runnable(){
 			public void run(){
 				while(true){
 					try {
+						Thread.sleep(DELAY);
+						if(!running)continue;
 						update();
 						jf.repaint();
-						Thread.sleep(DELAY);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					} catch (ArrayIndexOutOfBoundsException e) {
 						e.printStackTrace();
-						balls.clear();
+						bodies.clear();
 					}
 				}
 			}
@@ -420,6 +479,7 @@ public class PhysicsSim implements ChangeListener{
 									rawBG.getGreen(),
 									rawBG.getBlue(),
 									255-trail.getValue());
+				jf.repaint();
 			}else if(jsl.equals(radiusS)){
 				radius = radiusS.getValue();
 			}
@@ -454,10 +514,10 @@ public class PhysicsSim implements ChangeListener{
 		g.drawRect(0, 0, wallx, wally);
 	}
 	
-	//draw all balls
-	public void drawBalls(Graphics g){	
-		for(int i=0;i<balls.size();i++){
-			balls.elementAt(i).drawBall(g);
+	//draw all bodies
+	public void drawBodies(Graphics g){	
+		for(int i=0;i<bodies.size();i++){
+			bodies.elementAt(i).drawBody(g);
 		}		
 	}
 		
@@ -475,10 +535,10 @@ public class PhysicsSim implements ChangeListener{
 	
 	//to draw total momentum vector from the center of mass
 	public void drawMomentum(Graphics g){
-		Ball b;
+		RigidBody b;
 		Vec s = new Vec();
-		for(int i=0;i<balls.size();i++){
-			b=balls.get(i);
+		for(int i=0;i<bodies.size();i++){
+			b=bodies.get(i);
 			s.add(b.vel.scaleV(1/b.invMass)); 
 		}
 		s.scale(zoom).draw(g, centerOM(), vecColor);
@@ -488,9 +548,9 @@ public class PhysicsSim implements ChangeListener{
 	public Vec centerOM(){
 		Vec s = new Vec(0,0);
 		double m=0;
-		Ball b;
-		for(int i=0;i<balls.size();i++){
-			b=balls.get(i);
+		RigidBody b;
+		for(int i=0;i<bodies.size();i++){
+			b=bodies.get(i);
 			s.add(b.pos.scaleV(1/b.invMass));
 			m+=1/b.invMass;
 		}
@@ -518,6 +578,27 @@ public class PhysicsSim implements ChangeListener{
 		return v.plus(-pan.x, -pan.y).scaleV(1/zoom);
 	}
 	
+	//State managment:
+	
+	//updates the information in the state object to match the current information
+	public void updateState(){
+		state.setBodies(bodies);
+		state.walls = walls;
+		state.pan = pan;
+		state.zoom = zoom;
+		state.bgColor = rawBG;
+	}
+	
+	//updates the current information to match that in the state
+	public void putState(){
+		walls = state.walls;
+		wallsCB.setSelected(walls);
+		pan = state.pan;
+		zoom = state.zoom;
+		Color c = state.bgColor;
+		bgColor = new Color(c.getRed(),c.getGreen(),c.getBlue(),255-trail.getValue());
+		rawBG = c;
+	}
 	
 	//Physics functions:
 	
@@ -527,11 +608,11 @@ public class PhysicsSim implements ChangeListener{
 //		Vec ua, ub, p, vels, r;
 		wallMomentum = 0;
 		Ball a,b;
-		for(int i=0;i<balls.size();i++){
-			for(int j=0;j<balls.size();j++){
+		for(int i=0;i<bodies.size();i++){
+			for(int j=0;j<bodies.size();j++){
 				if(i==j)continue;
-				a = balls.elementAt(i);
-				b = balls.elementAt(j);
+				a = (Ball) bodies.elementAt(i);
+				b = (Ball) bodies.elementAt(j);
 				if(j>i)gravitate(a,b);
 				if(checkCollision(a,b)){
 					collide(a,b,res);
@@ -554,11 +635,11 @@ public class PhysicsSim implements ChangeListener{
 //				a.vel.add(r.scaleV(grav*b.mass/Math.pow(r.mag(),3)));
 //				b.vel.add(r.scaleV(-grav*a.mass/Math.pow(r.mag(),3)));
 			}
-			if(walls)checkWall(balls.elementAt(i));
-			balls.elementAt(i).update();
+			if(walls)checkWall((Ball) bodies.elementAt(i));
+			bodies.elementAt(i).update();
 		}
 
-		System.out.println(wallMomentum!=0?wallMomentum:"");
+//		System.out.println(wallMomentum!=0?wallMomentum:"");
 		energyLab.setText(String.format("Kinetic Energy: %.8g", energy()));
 	}
 	
@@ -694,10 +775,10 @@ public class PhysicsSim implements ChangeListener{
 	
 	//calculate total energy
 	public double energy(){
-		Ball b;
+		RigidBody b;
 		double s=0;
-		for(int i=0;i<balls.size();i++){
-			b=balls.get(i);
+		for(int i=0;i<bodies.size();i++){
+			b=bodies.get(i);
 			s+= 0.5 / b.invMass * b.vel.dot(b.vel); 
 		}
 		return s;
