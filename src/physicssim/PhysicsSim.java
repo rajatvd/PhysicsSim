@@ -132,7 +132,7 @@ public class PhysicsSim implements ChangeListener{
 		main = new JPanel();
 		GroupLayout gl = new GroupLayout(main);
 		main.setLayout(gl);
-		main.setPreferredSize(new Dimension(+230,image.getHeight()+30));
+//		main.setPreferredSize(new Dimension(+230,image.getHeight()+30));
 		
 		//ball preview container
 		ballPreview = new JPanel(){
