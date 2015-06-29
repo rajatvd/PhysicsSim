@@ -9,7 +9,7 @@ import javax.swing.event.*;
 
 public class PhysicsSim implements ChangeListener{
 	
-	private static final String VERSION = "v1.2";
+	private static final String VERSION = "v1.2b";
 	
 	//GUI fields
 	Image img;
@@ -37,8 +37,7 @@ public class PhysicsSim implements ChangeListener{
 	double wallMomentum = 0;
 	
 	//wall width and height, ball creation radius
-	int wallx=1100, wally=650, radius=6,
-		viewx=1100, viewy=650;
+	int wallx=1100, wally=650, radius=6;
 	
 	//thread delay
 	final int DELAY = 10;
@@ -105,7 +104,7 @@ public class PhysicsSim implements ChangeListener{
 //		jf.setResizable(false);
 		
 		//canvas image
-		img = jf.createImage(viewx, viewy);
+		img = jf.createImage(1500, 1500);
 		g2 = (Graphics2D)img.getGraphics();
 		
 		
@@ -127,13 +126,13 @@ public class PhysicsSim implements ChangeListener{
 				invTransform(g2);
 			}
 		};
-		image.setPreferredSize(new Dimension(viewx,1500));
+//		image.setPreferredSize(new Dimension(viewx,1500));
 		
 		//main container
 		main = new JPanel();
 		GroupLayout gl = new GroupLayout(main);
 		main.setLayout(gl);
-		main.setPreferredSize(new Dimension(viewx+230,viewy+30));
+		main.setPreferredSize(new Dimension(+230,image.getHeight()+30));
 		
 		//ball preview container
 		ballPreview = new JPanel(){
@@ -168,11 +167,11 @@ public class PhysicsSim implements ChangeListener{
 		
 		//spinners
 		//first argument of constructor is default value
-		gravitySpinner = new JSpinner(new SpinnerNumberModel(5,-1000,1000,5.0));
+		gravitySpinner = new JSpinner(new SpinnerNumberModel(5,-1000,1000,1.0));
 		gravitySpinner.setPreferredSize(new Dimension(70,20));
 		gravitySpinner.addChangeListener(this);
 		
-		massSpinner = new JSpinner(new SpinnerNumberModel(10,-1,1000,1.0));
+		massSpinner = new JSpinner(new SpinnerNumberModel(10,-1,1000,5.0));
 		massSpinner.setPreferredSize(new Dimension(70,20));
 		massSpinner.addChangeListener(this);
 		
@@ -202,35 +201,32 @@ public class PhysicsSim implements ChangeListener{
 		//buttons
 		chooseColor.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
-				ballColor = JColorChooser.showDialog(jf, "Choose ball colour", ballColor);
+				Color c = JColorChooser.showDialog(jf, "Choose ball colour", ballColor);
+				if(c==null)return;
+				ballColor = c;
+				jf.repaint();
 			}		
 		});
 		chooseBGColor.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
 				Color c = JColorChooser.showDialog(jf, "Choose ball colour", ballColor);
+				if(c==null)return;
 				bgColor = new Color(c.getRed(),c.getGreen(),c.getBlue(),255-trail.getValue());
 				rawBG = c;
 				updateState();
+				jf.repaint();
 			}		
 		});
 		reset.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
 				bodies.clear();
 				zoom=1;
-				pan.x=0;
-				pan.y=0;
-				jf.repaint();
+				centreView();
 			}		
 		});
 		centerView.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
-				if(bodies.size()==0){
-					pan.x=viewx/2 - wallx*zoom/2;
-					pan.y=viewy/2 - wally*zoom/2;
-				}else{
-					pan = (invTransform(centerOM()).scale(-1*zoom))
-							.plus(new Vec(viewx/2, viewy/2));
-				}
+				centreView();
 			}		
 		});
 		playPause.addActionListener(new ActionListener(){
@@ -285,9 +281,9 @@ public class PhysicsSim implements ChangeListener{
 		gl.setHorizontalGroup(
 				gl.createSequentialGroup()
 				.addComponent(image,
-						GroupLayout.PREFERRED_SIZE, 
-						GroupLayout.PREFERRED_SIZE,
-				        GroupLayout.PREFERRED_SIZE)//main jpanel with image 
+						0, 
+						GroupLayout.DEFAULT_SIZE,
+				        Short.MAX_VALUE)//main jpanel with image 
 				        
 				//parallel group of parameter tuners:
 				.addGroup(gl.createParallelGroup(GroupLayout.Alignment.CENTER, false)
@@ -331,9 +327,9 @@ public class PhysicsSim implements ChangeListener{
 		gl.setVerticalGroup(
 				gl.createParallelGroup()
 				.addComponent(image,
-						GroupLayout.PREFERRED_SIZE, 
-						GroupLayout.PREFERRED_SIZE,
-				        GroupLayout.PREFERRED_SIZE)
+						0, 
+						GroupLayout.DEFAULT_SIZE,
+				        Short.MAX_VALUE)
 				.addGroup(gl.createSequentialGroup()
 						.addGroup(gl.createParallelGroup()
 								.addComponent(reset)
@@ -463,7 +459,7 @@ public class PhysicsSim implements ChangeListener{
 		thread.start();
 		
 		jf.setContentPane(main);
-		jf.pack();
+		jf.setSize(wallx+240,wally+70);
 		
 	}
 	
@@ -479,7 +475,6 @@ public class PhysicsSim implements ChangeListener{
 									rawBG.getGreen(),
 									rawBG.getBlue(),
 									255-trail.getValue());
-				jf.repaint();
 			}else if(jsl.equals(radiusS)){
 				radius = radiusS.getValue();
 			}
@@ -495,10 +490,22 @@ public class PhysicsSim implements ChangeListener{
 				mass = (Double) massSpinner.getValue();
 			}
 		}
+		jf.repaint();
 	}
 	
 	
 	//Graphics functions:
+	
+	public void centreView(){
+		if(bodies.size()==0){
+			pan.x=image.getWidth()/2 - wallx*zoom/2;
+			pan.y=image.getHeight()/2 - wally*zoom/2;
+		}else{
+			pan = (invTransform(centerOM()).scale(-1*zoom))
+					.plus(new Vec(image.getWidth()/2, image.getHeight()/2));
+		}
+		jf.repaint();
+	}
 	
 	public Color invert(Color c){
 		return new Color(255-c.getRed(), 255-c.getGreen(), 255-c.getBlue());
