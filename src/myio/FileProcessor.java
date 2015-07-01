@@ -19,7 +19,7 @@ public class FileProcessor {
 	private String readram;
 	private FileFilter filter;
 	@SuppressWarnings("unused")
-	private static final String VERSION = "v1.0";
+	private static final String VERSION = "v1.1";
 	
 	public boolean setFile(Component c, boolean saving){
 		
@@ -130,5 +130,8 @@ public class FileProcessor {
 		writer.close();
 	}
 	
+	public File getFile(){
+		return file;
+	}
 	
 }

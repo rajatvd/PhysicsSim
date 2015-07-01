@@ -2,14 +2,19 @@ package physicssim;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.*;
+import java.io.*;
 import java.util.Vector;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.*;
 
+import myio.FileProcessor;
+
 public class PhysicsSim implements ChangeListener{
 	
-	private static final String VERSION = "v1.2b";
+	private static final String VERSION = "v1.3";
 	
 	//GUI fields
 	Image img;
@@ -85,7 +90,8 @@ public class PhysicsSim implements ChangeListener{
 	JMenu file = new JMenu("File");
 	
 	JMenuItem saveState = new JMenuItem("Save state"),
-			  loadState = new JMenuItem("Load state");
+			  loadState = new JMenuItem("Load state"),
+			  saveImage = new JMenuItem("Save image");
 	
 	Thread thread;
 	
@@ -104,7 +110,7 @@ public class PhysicsSim implements ChangeListener{
 //		jf.setResizable(false);
 		
 		//canvas image
-		img = jf.createImage(1500, 1500);
+		img = jf.createImage(1500, 1000);
 		g2 = (Graphics2D)img.getGraphics();
 		
 		
@@ -253,6 +259,7 @@ public class PhysicsSim implements ChangeListener{
 		//adding menu items to the menus
 		file.add(saveState);
 		file.add(loadState);
+		file.add(saveImage);
 		
 		//event handling for menu items
 		saveState.addActionListener(new ActionListener(){
@@ -273,6 +280,27 @@ public class PhysicsSim implements ChangeListener{
 				putState();
 				running = temp;
 				jf.repaint();
+			}		
+		});
+		saveImage.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent arg0) {
+				boolean temp = running;
+				running = false;
+				//saving part of the image which is visible
+				BufferedImage bf = new BufferedImage(image.getWidth(),
+											image.getHeight(),
+											BufferedImage.TYPE_4BYTE_ABGR);
+				bf.getGraphics().drawImage(img, 0, 0,null);
+				bf.getGraphics().dispose();
+				FileProcessor fp = new FileProcessor();
+				fp.setFile(jf, ".png", true);
+				try {
+					ImageIO.write(bf, "png", fp.getFile());
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				running = temp;
+				bf.flush();
 			}		
 		});
 		
