@@ -13,7 +13,7 @@ public class State {
 	
 	//state information about camera view
 	public Vec pan = new Vec();
-	public double zoom = 1;
+	public double zoom = 1, grav=1, res=1;
 	public Color bgColor = Color.black;
 	public boolean walls = false;
 	
@@ -40,6 +40,8 @@ public class State {
 	 * "true" or "false" indicating presence of walls
 	 * <Pan Vector>
 	 * <Zoom double>
+	 * <Grav double>
+	 * <Res double>
 	 * <BGColor Vector>
 	 * <For each body:>
 	 * 	"NEXT BODY"
@@ -51,6 +53,9 @@ public class State {
 	 * 	<Body specific parameters>
 	 * 
 	 */
+	/**
+	 * Loads a new state from a file
+	 */
 	public void loadState(){
 		if(!fp.setFile(null, ".state", false))return;
 		String[] bodyinfo = fp.readFile("NEXT BODY");
@@ -59,7 +64,9 @@ public class State {
 		walls = init[0].equals("true");
 		pan = new Vec(init[1]);
 		zoom = doublify(init[2]);
-		Vec bg = new Vec(init[3]);
+		grav = doublify(init[3]);
+		res = doublify(init[4]);
+		Vec bg = new Vec(init[5]);
 		bgColor = new Color((int)bg.x,
 							(int)bg.y,
 							(int)bg.z);
@@ -70,6 +77,9 @@ public class State {
 		}
 	}
 	
+	/**
+	 * Saves the current state into a file
+	 */
 	public void saveState(){
 		if(!fp.setFile(null, ".state", true))return;
 		
@@ -83,6 +93,8 @@ public class State {
 		info += walls+"\n";
 		info += pan+"\n";
 		info += zoom+"\n";
+		info += grav+"\n";
+		info += res+"\n";
 		info += bg+"\n";
 		
 		//rigidbody state information
@@ -113,6 +125,11 @@ public class State {
 		fp.writeFile(info);
 	}
 	
+	/**
+	 * Reads Info from a .state file
+	 * @param s - String with certain format with details about a RigidBody
+	 * @return A RigidBody with properties from the given String
+	 */
 	private RigidBody readInfo(String s){
 		
 		//setup
@@ -142,6 +159,12 @@ public class State {
 		return null;
 	}
 	
+	/**
+	 * Short hand for Double.parseDouble
+	 * @param s
+	 * @return Double form of string s
+	 * @throws NumberFormatException
+	 */
 	private double doublify(String s) throws NumberFormatException{
 		return Double.parseDouble(s);
 	}

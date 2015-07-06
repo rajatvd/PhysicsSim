@@ -10,11 +10,13 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.*;
 
+import mousehandler.MousePan;
+import mousehandler.MouseStateHandler;
 import myio.FileProcessor;
 
 public class PhysicsSim implements ChangeListener{
 	
-	private static final String VERSION = "v1.3";
+	private static final String VERSION = "v1.3b";
 	
 	//GUI fields
 	Image img;
@@ -38,8 +40,9 @@ public class PhysicsSim implements ChangeListener{
 	//coefficient of restitution, gravity contant, ball creation mass
 	double res=1, grav=5, mass;
 	
-	//magnitude of normal momentum transfer to walls per timestep
-	double wallMomentum = 0;
+	//magnitude of normal momentum transfer to walls per timestep, 
+	//factor to scale drawn vector length by, to obtain velocity
+	double wallMomentum = 0, sensitivity = 0.03;
 	
 	//wall width and height, ball creation radius
 	int wallx=1100, wally=650, radius=6;
@@ -50,22 +53,20 @@ public class PhysicsSim implements ChangeListener{
 	//sliders
 	//3rd argument is default value
 	JSlider radiusS  = new JSlider(JSlider.HORIZONTAL, 0, 50, 6),
-//			gravity = new JSlider(JSlider.HORIZONTAL, -200, 200, 50),
-			resti   = new JSlider(JSlider.HORIZONTAL, 0, 100, 100),
 			trail   = new JSlider(JSlider.HORIZONTAL, 0, 255, 0);
 	
 	//labels
 	JLabel  massLab    = new JLabel("Mass:"),
 			radiusLab  = new JLabel("Radius"),
 			gravityLab = new JLabel("Gravity Strength:"),
-			restiLab   = new JLabel("Coefficient of Restitution"),
+			restiLab   = new JLabel("Restitution:"),
 			trailLab   = new JLabel("Trail"),
 			energyLab  = new JLabel("Energy: ");
 	
 	JCheckBox wallsCB   = new JCheckBox("Walls"),
 			  momentumCB = new JCheckBox("Show Momentum Vector");
 	
-	JSpinner gravitySpinner, massSpinner;
+	JSpinner gravitySpinner, massSpinner, restiSpinner;
 	
 	JButton chooseColor = new JButton("Choose ball colour"),
 			chooseBGColor = new JButton("Choose background colour"),
@@ -95,6 +96,10 @@ public class PhysicsSim implements ChangeListener{
 	
 	Thread thread;
 	
+	MouseStateHandler mouseHand = new MouseStateHandler();
+	MousePan panState = new MousePan();
+	MouseVecCreator vecState;
+	
 	
 	public static void main(String[] args) {
 		new PhysicsSim();
@@ -110,7 +115,7 @@ public class PhysicsSim implements ChangeListener{
 //		jf.setResizable(false);
 		
 		//canvas image
-		img = jf.createImage(1500, 1000);
+		img = jf.createImage(2300, 1200);
 		g2 = (Graphics2D)img.getGraphics();
 		
 		
@@ -128,6 +133,7 @@ public class PhysicsSim implements ChangeListener{
 					drawWalls(gg);
 					invTransform(gg);
 				}
+//				vecState.setGraphics(gg);
 				drawVecs(g);
 				invTransform(g2);
 			}
@@ -181,13 +187,11 @@ public class PhysicsSim implements ChangeListener{
 		massSpinner.setPreferredSize(new Dimension(70,20));
 		massSpinner.addChangeListener(this);
 		
+		restiSpinner = new JSpinner(new SpinnerNumberModel(1,0,1,0.01));
+		restiSpinner.setPreferredSize(new Dimension(70,20));
+		restiSpinner.addChangeListener(this);
 		
 		//sliders
-		resti.setMajorTickSpacing(20);
-		resti.setPaintTicks(true);
-		resti.setPaintLabels(true);
-		resti.addChangeListener(this);
-		
 		trail.setMajorTickSpacing(50);
 		trail.setPaintTicks(true);
 		trail.setPaintLabels(true);
@@ -197,11 +201,6 @@ public class PhysicsSim implements ChangeListener{
 		radiusS.setPaintTicks(true);
 		radiusS.setPaintLabels(true);
 		radiusS.addChangeListener(this);
-		
-//		gravity.setMajorTickSpacing(100);
-//		gravity.setPaintTicks(true);
-//		gravity.setPaintLabels(true);
-//		gravity.addChangeListener(this);
 		
 		
 		//buttons
@@ -326,8 +325,13 @@ public class PhysicsSim implements ChangeListener{
 										GroupLayout.PREFERRED_SIZE,
 								        GroupLayout.PREFERRED_SIZE)
 								)
-						.addComponent(restiLab)
-						.addComponent(resti)
+						.addGroup(gl.createSequentialGroup()
+								.addComponent(restiLab)
+								.addComponent(restiSpinner,
+										GroupLayout.PREFERRED_SIZE, 
+										GroupLayout.PREFERRED_SIZE,
+								        GroupLayout.PREFERRED_SIZE)
+								)
 						.addComponent(trailLab)
 						.addComponent(trail)
 						.addComponent(wallsCB)
@@ -370,8 +374,13 @@ public class PhysicsSim implements ChangeListener{
 										GroupLayout.PREFERRED_SIZE,
 								        GroupLayout.PREFERRED_SIZE)
 								)
-						.addComponent(restiLab)
-						.addComponent(resti)
+						.addGroup(gl.createParallelGroup()
+								.addComponent(restiLab)
+								.addComponent(restiSpinner,
+										GroupLayout.PREFERRED_SIZE, 
+										GroupLayout.PREFERRED_SIZE,
+								        GroupLayout.PREFERRED_SIZE)
+								)
 						.addComponent(trailLab)
 						.addComponent(trail)
 						.addComponent(wallsCB)
@@ -401,6 +410,11 @@ public class PhysicsSim implements ChangeListener{
 		
 		
 		//mouse response
+		vecState = new MouseVecCreator();
+		panState.setPanVec(pan);
+		mouseHand.setLeftState(vecState);
+		mouseHand.setRightState(panState);
+		
 		MouseAdapter mouse = new MouseAdapter(){
 			
 			public void mousePressed(MouseEvent e){
@@ -409,6 +423,7 @@ public class PhysicsSim implements ChangeListener{
 				mass = (Double) massSpinner.getValue();
 				oldPan.x = pan.x;
 				oldPan.y = pan.y;
+//				mouseHand.pressAction(e);
 			}
 			
 			public void mouseDragged(MouseEvent e){
@@ -420,17 +435,15 @@ public class PhysicsSim implements ChangeListener{
 				}else{
 					isCreatingBall = true;
 				}
+//				mouseHand.dragAction(e);
 				jf.repaint();
 			}
 			
 			public void mouseReleased(MouseEvent e){
-//				int r = e.getButton();
-//				Ball a = new Ball(pos, radius, 1/mass);
-//				a.vel = new Vec(e.getX(), e.getY()).minus(pos).scale(0.1);
 				isCreatingBall = false;
 				if(SwingUtilities.isLeftMouseButton(e)){
 					Vec pos = invTransform(clickPos);
-					Vec vel = new Vec(e.getX(), e.getY()).minus(clickPos).scale(0.1/zoom);
+					Vec vel = new Vec(e.getX(), e.getY()).minus(clickPos).scale(sensitivity/zoom);
 					bodies.add(new Ball(pos, 
 							vel,
 							radius, 
@@ -439,6 +452,17 @@ public class PhysicsSim implements ChangeListener{
 				}
 				clickPos.x = 0;clickPos.y = 0;
 				end.x = 0;end.y = 0;
+				mouseHand.releaseAction(e);
+//				if(vecState.hasVec()){
+//					Vec vel = vecState.getVec().scale(sensitivity/zoom);
+//					Vec pos = invTransform(vecState.getOrigin());
+//					bodies.add(new Ball(pos, 
+//							vel,
+//							radius, 
+//							mass,
+//							ballColor));
+//				}
+				
 				updateState();
 				jf.repaint();
 			}
@@ -496,9 +520,7 @@ public class PhysicsSim implements ChangeListener{
 		Object source = e.getSource();
 		if(source instanceof JSlider){
 			JSlider jsl = (JSlider)e.getSource();
-			if(jsl.equals(resti)){
-				res = resti.getValue()/100.0;
-			}else if(jsl.equals(trail)){
+			if(jsl.equals(trail)){
 				bgColor = new Color(rawBG.getRed(),
 									rawBG.getGreen(),
 									rawBG.getBlue(),
@@ -516,6 +538,8 @@ public class PhysicsSim implements ChangeListener{
 			}else if(js.equals(massSpinner)){
 //				System.out.println("MASS CHANGED");
 				mass = (Double) massSpinner.getValue();
+			}else if(js.equals(restiSpinner)){
+				res = (Double) restiSpinner.getValue();
 			}
 		}
 		jf.repaint();
@@ -541,7 +565,7 @@ public class PhysicsSim implements ChangeListener{
 	
 	public void clearImage(Graphics g){
 		g.setColor(bgColor);
-		g.fillRect(0, 0, 1700, 1500);
+		g.fillRect(0, 0, 2300, 1200);
 	}
 	
 	public void drawWalls(Graphics g){
@@ -549,7 +573,10 @@ public class PhysicsSim implements ChangeListener{
 		g.drawRect(0, 0, wallx, wally);
 	}
 	
-	//draw all bodies
+	/**
+	 * draw all bodies
+	 * @param g - Graphics
+	 */
 	public void drawBodies(Graphics g){	
 		for(int i=0;i<bodies.size();i++){
 			bodies.elementAt(i).drawBody(g);
@@ -557,18 +584,28 @@ public class PhysicsSim implements ChangeListener{
 	}
 		
 		
-	//draw all vectors
+	/**
+	 * Draw all vectors
+	 * @param g - Graphics
+	 */
 	public void drawVecs(Graphics g){
 		if(isCreatingBall)drawBallCreationVec(g);
 		if(drawMomentum)drawMomentum(g);
 	}
 	
-	//to draw velocity vector of particle about to be made
+	/**
+	 * To draw velocity vector of particle about to be made
+	 * @param g - Graphics
+	 */
 	public void drawBallCreationVec(Graphics g){
 		(end.minus(clickPos)).draw(g, clickPos, vecColor);
 	}
 	
-	//to draw total momentum vector from the center of mass
+	
+	/**
+	 * to draw total momentum vector from the center of mass
+	 * @param g - Graphics to draw with
+	 */
 	public void drawMomentum(Graphics g){
 		RigidBody b;
 		Vec s = new Vec();
@@ -576,10 +613,13 @@ public class PhysicsSim implements ChangeListener{
 			b=bodies.get(i);
 			s.add(b.vel.scaleV(1/b.invMass)); 
 		}
-		s.scale(zoom).draw(g, centerOM(), vecColor);
+		s.scale(zoom/sensitivity/10).draw(g, centerOM(), vecColor);
 	}
 	
-	//returns the center of mass of the collection of balls
+	/**
+	 * 
+	 * @return The center of mass of the collection of balls
+	 */
 	public Vec centerOM(){
 		Vec s = new Vec(0,0);
 		double m=0;
@@ -594,42 +634,68 @@ public class PhysicsSim implements ChangeListener{
 	
 	
 	//Zoom and pan transforms of graphics2D
+	/**
+	 * Translate then scale
+	 * @param g - Graphics2D to transform
+	 */
 	public void transform(Graphics2D g){
 		g.translate(pan.x, pan.y);
 		g.scale(zoom, zoom);
 	}
 	
+	/**
+	 * Inverse scale then inverse translate
+	 * @param g - Graphics2D to transform
+	 */
 	public void invTransform(Graphics2D g){
 		g.scale(1/zoom, 1/zoom);	
 		g.translate(-pan.x, -pan.y);
 	}
 	
 	//Zoom and pan transforms of vectors
+	/**
+	 * Inverse scale then inverse translate
+	 * @param v - Vec to transform
+	 */
 	public Vec transform(Vec v){
 		return v.scaleV(zoom).plus(pan.x, pan.y);
 	}
 	
+	/**
+	 * Inverse translate then inverse scale
+	 * @param v - Vec to transform
+	 */
 	public Vec invTransform(Vec v){
 		return v.plus(-pan.x, -pan.y).scaleV(1/zoom);
 	}
 	
 	//State managment:
 	
-	//updates the information in the state object to match the current information
+	/**
+	 * Updates the information in the state object to match the current information
+	 */
 	public void updateState(){
 		state.setBodies(bodies);
 		state.walls = walls;
 		state.pan = pan;
 		state.zoom = zoom;
+		state.grav = grav;
+		state.res = res;
 		state.bgColor = rawBG;
 	}
 	
-	//updates the current information to match that in the state
+	/**
+	 * Updates the current information to match that in the state
+	 */
 	public void putState(){
 		walls = state.walls;
 		wallsCB.setSelected(walls);
 		pan = state.pan;
 		zoom = state.zoom;
+		grav = state.grav;
+		gravitySpinner.setValue(grav);
+		res = state.res;
+		restiSpinner.setValue(res);
 		Color c = state.bgColor;
 		bgColor = new Color(c.getRed(),c.getGreen(),c.getBlue(),255-trail.getValue());
 		rawBG = c;
@@ -637,10 +703,11 @@ public class PhysicsSim implements ChangeListener{
 	
 	//Physics functions:
 	
-	//main update function
+	/**
+	 * Main update function
+	 * @throws ArrayIndexOutOfBoundsException
+	 */
 	public void update() throws ArrayIndexOutOfBoundsException{
-//		System.out.println(energy());
-//		Vec ua, ub, p, vels, r;
 		wallMomentum = 0;
 		Ball a,b;
 		for(int i=0;i<bodies.size();i++){
@@ -648,34 +715,18 @@ public class PhysicsSim implements ChangeListener{
 				if(i==j)continue;
 				a = (Ball) bodies.elementAt(i);
 				b = (Ball) bodies.elementAt(j);
+				//gravity
 				if(j>i)gravitate(a,b);
 				if(checkCollision(a,b)){
 					collide(a,b,res);
-//					if(a.vel.x==0 && a.vel.y==0 && 
-//					b.vel.x==0 && b.vel.y==0)continue;
-//					while(checkCollision(a,b)){
-////						a.pos.add(a.vel.scaleV(1/a.vel.mag()));
-////						b.pos.add(b.vel.scaleV(1/b.vel.mag()));
-//						a.update();b.update();
-//					}
-//					ua = a.vel;
-//					ub = b.vel;
-//					p = ua.scaleV(a.mass).plus(ub.scaleV(b.mass));
-//					b.vel = p.minus((ub.minus(ua).scale(a.mass*res))).scale(1.0/(a.mass+b.mass));
-//					a.vel = p.plus((ub.minus(ua).scale(b.mass*res))).scale(1.0/(a.mass+b.mass));
 				}
-//				gravitate(a,b);
-//				r = b.pos.minus(a.pos);
-//				if(r.mag()<Math.max(b.r, a.r)*2)continue;
-//				a.vel.add(r.scaleV(grav*b.mass/Math.pow(r.mag(),3)));
-//				b.vel.add(r.scaleV(-grav*a.mass/Math.pow(r.mag(),3)));
 			}
 			if(walls)checkWall((Ball) bodies.elementAt(i));
 			bodies.elementAt(i).update();
 		}
 
 //		System.out.println(wallMomentum!=0?wallMomentum:"");
-		energyLab.setText(String.format("Kinetic Energy: %.8g", energy()));
+		energyLab.setText(String.format("Kinetic Energy: %.8g", kineticEnergy()));
 	}
 	
 	
@@ -683,7 +734,10 @@ public class PhysicsSim implements ChangeListener{
 		return a.pos.minus(b.pos).mag()<a.r+b.r;
 	}
 	
-	//perform wall collision
+	/**
+	 * Check and perform wall collision
+	 * @param a - The ball to check
+	 */
 	public void checkWall(Ball a){
 		if(a.pos.x<=a.r){
 			a.vel.x = -a.vel.x;
@@ -707,7 +761,11 @@ public class PhysicsSim implements ChangeListener{
 		}
 	}
 	
-	//perform gravity update
+	/**
+	 * Perform gravity update
+	 * @param a - first ball to gravitate
+	 * @param b - second ball to gravitate
+	 */
 	public void gravitate(Ball a, Ball b){
 		Vec r = b.pos.minus(a.pos);
 		//to prevent penetration gravity
@@ -783,7 +841,12 @@ public class PhysicsSim implements ChangeListener{
 	 * 
 	 */
 	
-	//Collide function
+	/**
+	 * Collide a and b
+	 * @param a - first ball
+	 * @param b - second ball
+	 * @param rest - coefficient of restitution for the collision
+	 */
 	public void collide(Ball a, Ball b, double rest){
 		//get vectors
 		Vec ua = a.vel, ub = b.vel;
@@ -808,13 +871,33 @@ public class PhysicsSim implements ChangeListener{
 		
 	}
 	
-	//calculate total energy
-	public double energy(){
+	/**
+	 * Calculate kinetic energy
+	 * @return Kinetic energy of the system
+	 */
+	public double kineticEnergy(){
 		RigidBody b;
 		double s=0;
 		for(int i=0;i<bodies.size();i++){
 			b=bodies.get(i);
 			s+= 0.5 / b.invMass * b.vel.dot(b.vel); 
+		}
+		return s;
+	}
+	
+	/**
+	 * Calculate potential energy
+	 * @return Potential energy of the system
+	 */
+	public double potentialEnergy(){
+		RigidBody a,b;
+		double s=0;
+		for(int i=0;i<bodies.size();i++){
+			a=bodies.get(i);
+			for(int j=i+1;j<bodies.size();j++){
+				b=bodies.get(j);
+				s += -1*grav/(a.invMass*b.invMass*a.pos.minus(b.pos).mag());
+			}
 		}
 		return s;
 	}

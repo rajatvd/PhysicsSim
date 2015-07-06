@@ -7,7 +7,7 @@ import java.awt.Graphics2D;
 
 public class Vec {
 	
-	double x,y,z=0;
+	public double x,y,z=0;
 	public static final Vec ZERO = new Vec(0,0);
 	
 	public Vec(){
@@ -34,6 +34,12 @@ public class Vec {
 		x=xx;y=yy;z=0;
 	}
 	
+	public Vec(Vec v) {
+		x=v.x;
+		y=v.y;
+		z=v.z;
+	}
+
 	public Vec add(Vec v){
 		x+=v.x;
 		y+=v.y;
