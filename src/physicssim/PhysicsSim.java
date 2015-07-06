@@ -10,13 +10,12 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.*;
 
-import mousehandler.MousePan;
 import mousehandler.MouseStateHandler;
 import myio.FileProcessor;
 
 public class PhysicsSim implements ChangeListener{
 	
-	private static final String VERSION = "v1.3b";
+	private static final String VERSION = "v1.3c";
 	
 	//GUI fields
 	Image img;
@@ -30,11 +29,8 @@ public class PhysicsSim implements ChangeListener{
 	//state object
 	State state = new State();
 	
-	//mouse vectors
-	Vec clickPos = new Vec(), end = new Vec();
-	
 	//pan amount and zooming scale
-	Vec pan = new Vec(), oldPan = new Vec();
+	Vec pan = new Vec();
 	double zoom=1;
 	
 	//coefficient of restitution, gravity contant, ball creation mass
@@ -45,7 +41,8 @@ public class PhysicsSim implements ChangeListener{
 	double wallMomentum = 0, sensitivity = 0.03;
 	
 	//wall width and height, ball creation radius
-	int wallx=1100, wally=650, radius=6;
+	int wallx=1100, wally=650, radius=6,
+		imagex = 2300,imagey = 1200;
 	
 	//thread delay
 	final int DELAY = 10;
@@ -80,8 +77,7 @@ public class PhysicsSim implements ChangeListener{
 		  bgColor = new Color(0,0,0,255), 
 		  rawBG = Color.black;//backgournd color without transparency
 	
-	boolean isCreatingBall = false,//is left mouse button dragging?
-			drawMomentum = false,
+	boolean drawMomentum = false,
 			walls = false,
 			running = true;//is not paused?
 	
@@ -115,7 +111,7 @@ public class PhysicsSim implements ChangeListener{
 //		jf.setResizable(false);
 		
 		//canvas image
-		img = jf.createImage(2300, 1200);
+		img = jf.createImage(imagex, imagey);
 		g2 = (Graphics2D)img.getGraphics();
 		
 		
@@ -134,17 +130,16 @@ public class PhysicsSim implements ChangeListener{
 					invTransform(gg);
 				}
 //				vecState.setGraphics(gg);
+				mouseHand.drawStates(g);
 				drawVecs(g);
 				invTransform(g2);
 			}
 		};
-//		image.setPreferredSize(new Dimension(viewx,1500));
 		
 		//main container
 		main = new JPanel();
 		GroupLayout gl = new GroupLayout(main);
 		main.setLayout(gl);
-//		main.setPreferredSize(new Dimension(+230,image.getHeight()+30));
 		
 		//ball preview container
 		ballPreview = new JPanel(){
@@ -418,50 +413,53 @@ public class PhysicsSim implements ChangeListener{
 		MouseAdapter mouse = new MouseAdapter(){
 			
 			public void mousePressed(MouseEvent e){
-				clickPos.x = e.getX();
-				clickPos.y = e.getY();
-				mass = (Double) massSpinner.getValue();
-				oldPan.x = pan.x;
-				oldPan.y = pan.y;
-//				mouseHand.pressAction(e);
+//				clickPos.x = e.getX();
+//				clickPos.y = e.getY();
+//				mass = (Double) massSpinner.getValue();
+//				oldPan.x = pan.x;
+//				oldPan.y = pan.y;
+				
+				mouseHand.pressAction(e);
 			}
 			
 			public void mouseDragged(MouseEvent e){
-				end.x = e.getX();
-				end.y = e.getY();
-				if(SwingUtilities.isRightMouseButton(e)){
-					//to dynmically change the pan while dragging right click
-					pan = oldPan.plus(end.minus(clickPos));
-				}else{
-					isCreatingBall = true;
-				}
-//				mouseHand.dragAction(e);
+//				end.x = e.getX();
+//				end.y = e.getY();
+//				if(SwingUtilities.isRightMouseButton(e)){
+//					//to dynmically change the pan while dragging right click
+//					pan = oldPan.plus(end.minus(clickPos));
+//				}else{
+//					isCreatingBall = true;
+//				}
+				
+				mouseHand.dragAction(e);
 				jf.repaint();
 			}
 			
 			public void mouseReleased(MouseEvent e){
-				isCreatingBall = false;
-				if(SwingUtilities.isLeftMouseButton(e)){
-					Vec pos = invTransform(clickPos);
-					Vec vel = new Vec(e.getX(), e.getY()).minus(clickPos).scale(sensitivity/zoom);
-					bodies.add(new Ball(pos, 
-							vel,
-							radius, 
-							mass,
-							ballColor));
-				}
-				clickPos.x = 0;clickPos.y = 0;
-				end.x = 0;end.y = 0;
-				mouseHand.releaseAction(e);
-//				if(vecState.hasVec()){
-//					Vec vel = vecState.getVec().scale(sensitivity/zoom);
-//					Vec pos = invTransform(vecState.getOrigin());
+//				isCreatingBall = false;
+//				if(SwingUtilities.isLeftMouseButton(e)){
+//					Vec pos = invTransform(clickPos);
+//					Vec vel = new Vec(e.getX(), e.getY()).minus(clickPos).scale(sensitivity/zoom);
 //					bodies.add(new Ball(pos, 
 //							vel,
 //							radius, 
 //							mass,
 //							ballColor));
 //				}
+//				clickPos.x = 0;clickPos.y = 0;
+//				end.x = 0;end.y = 0;
+				
+				mouseHand.releaseAction(e);
+				if(vecState.hasVec()){
+					Vec vel = vecState.getVec().scale(sensitivity/zoom);
+					Vec pos = invTransform(vecState.getOrigin());
+					bodies.add(new Ball(pos, 
+							vel,
+							radius, 
+							mass,
+							ballColor));
+				}
 				
 				updateState();
 				jf.repaint();
@@ -565,7 +563,7 @@ public class PhysicsSim implements ChangeListener{
 	
 	public void clearImage(Graphics g){
 		g.setColor(bgColor);
-		g.fillRect(0, 0, 2300, 1200);
+		g.fillRect(0, 0, imagex, imagey);
 	}
 	
 	public void drawWalls(Graphics g){
@@ -589,16 +587,7 @@ public class PhysicsSim implements ChangeListener{
 	 * @param g - Graphics
 	 */
 	public void drawVecs(Graphics g){
-		if(isCreatingBall)drawBallCreationVec(g);
 		if(drawMomentum)drawMomentum(g);
-	}
-	
-	/**
-	 * To draw velocity vector of particle about to be made
-	 * @param g - Graphics
-	 */
-	public void drawBallCreationVec(Graphics g){
-		(end.minus(clickPos)).draw(g, clickPos, vecColor);
 	}
 	
 	

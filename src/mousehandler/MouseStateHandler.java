@@ -1,11 +1,15 @@
 package mousehandler;
 
+import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 
 import javax.swing.SwingUtilities;
 
 
 public class MouseStateHandler {
+	
+	@SuppressWarnings("unused")
+	private static final String VERSION = "1.0";
 	
 	private MouseState leftButtonState, rightButtonState;
 	
@@ -70,6 +74,14 @@ public class MouseStateHandler {
 		}
 	}
 	
-	
+	/**
+	 * Calls the drawState function of both the left and right 
+	 * mouse button states of this handler.
+	 * @param g - Graphics object to pass into drawState
+	 */
+	public void drawStates(Graphics g){
+		rightButtonState.drawState(g);
+		leftButtonState.drawState(g);
+	}
 	
 }

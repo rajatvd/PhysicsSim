@@ -1,5 +1,6 @@
 package mousehandler;
 
+import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 
 public interface MouseState {
@@ -28,5 +29,11 @@ public interface MouseState {
 	 * @param e - MouseEvent of release
 	 */
 	public void mouseReleaseAction(MouseEvent e);
+	
+	/**
+	 * Draw something based on the MouseState
+	 * @param g - Graphics to draw the state with.
+	 */
+	public void drawState(Graphics g);
 	
 }

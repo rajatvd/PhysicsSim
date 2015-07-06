@@ -1,21 +1,17 @@
 package physicssim;
 
 import java.awt.Color;
-import java.awt.Graphics2D;
+import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 
 import mousehandler.MouseState;
 
 public class MouseVecCreator implements MouseState {
 	
-	private Graphics2D g;
 	private Vec start, end, vec;
-	private boolean hasVec;
+	private boolean hasVec, isCreatingVec = false;
 	public Color vecColor = Color.yellow;
 	
-	public void setGraphics(Graphics2D gg){
-		g = gg;
-	}
 	
 	/**
 	 * Sets the starting point of a Vec to create.
@@ -24,17 +20,17 @@ public class MouseVecCreator implements MouseState {
 		hasVec = false;
 		start = new Vec(e.getX(),e.getY());
 		end = new Vec(e.getX(),e.getY());
+		vec = end.minus(start);
 	}
 	
 	/**
-	 * Dynamically updates a Vec under creation and draws it using
-	 * the Graphics object.
+	 * Dynamically updates a Vec under creation.
 	 */
 	public void mouseDragAction(MouseEvent e) {
 		end.x=e.getX();
 		end.y=e.getY();
 		vec = end.minus(start);
-		vec.draw(g, start, vecColor);
+		isCreatingVec = true;
 	}
 	
 	/**
@@ -42,6 +38,7 @@ public class MouseVecCreator implements MouseState {
 	 */
 	public void mouseReleaseAction(MouseEvent e) {
 		hasVec = true;
+		isCreatingVec = false;
 	}
 	
 	/**
@@ -64,11 +61,19 @@ public class MouseVecCreator implements MouseState {
 	}
 	
 	/**
-	 * 
 	 * @return The origin of the created Vec
 	 */
 	public Vec getOrigin(){
 		return new Vec(start);
 	}
+	
+	/**
+	 * Draws the Vec if it is being created, from the mouse press position
+	 */
+	public void drawState(Graphics g) {
+		if(isCreatingVec)vec.draw(g, start, vecColor);
+	}
+	
+	
 	
 }

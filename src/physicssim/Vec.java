@@ -105,6 +105,12 @@ public class Vec {
 					   x*v.y - y*v.x);
 	}
 	
+	/**
+	 * Draws a Vec using a Graphics object. The color of the graphics may change.
+	 * @param g - Graphics object to draw the Vec
+	 * @param origin - Starting point of the Vec
+	 * @param c - Color of the Vec
+	 */
 	public void draw(Graphics g, Vec origin, Color c){
 		int mag = (int) this.mag();
 		Graphics2D g2 = (Graphics2D)g;
@@ -125,6 +131,12 @@ public class Vec {
 		g2.translate(-origin.x, -origin.y);
 	}
 	
+	/**
+	 * Draws a Vec using a Graphics object with a default color of orange. 
+	 * The color of the graphics is changed to orange
+	 * @param g - Graphics object to draw the Vec
+	 * @param origin - Starting point of the Vec
+	 */
 	public void draw(Graphics g, Vec origin){
 		int mag = (int) this.mag();
 		Graphics2D g2 = (Graphics2D)g;
@@ -145,6 +157,9 @@ public class Vec {
 		g2.translate(-origin.x, -origin.y);
 	}
 	
+	/**
+	 * Format: (x,y,z)
+	 */
 	public String toString(){
 		return "("+ x +","+ y +","+ z +")";
 	}

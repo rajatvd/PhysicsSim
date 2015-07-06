@@ -1,8 +1,10 @@
-package mousehandler;
+package physicssim;
 
+import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 
-import physicssim.Vec;
+import mousehandler.MouseState;
+
 
 
 public class MousePan implements MouseState {
@@ -53,4 +55,6 @@ public class MousePan implements MouseState {
 	public void setPanVec(Vec p){
 		pan = p;
 	}
+
+	public void drawState(Graphics g) {}
 }
