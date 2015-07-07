@@ -15,7 +15,7 @@ import myio.FileProcessor;
 
 public class PhysicsSim implements ChangeListener{
 	
-	private static final String VERSION = "v1.3c";
+	private static final String VERSION = "v1.4";
 	
 	//GUI fields
 	Image img;
@@ -845,7 +845,10 @@ public class PhysicsSim implements ChangeListener{
 		n.scale(1/n.mag());
 		
 		//check if collision is proper
-		if(U.dot(n)>=0)return;
+		if(U.dot(n)>=0){
+			separate(a,b);
+			return;
+		}
 		
 		
 		//find impulse
@@ -890,5 +893,20 @@ public class PhysicsSim implements ChangeListener{
 		}
 		return s;
 	}
-
+	
+	/**
+	 * Separates two balls if they are colliding. It moves both balls away from each other
+	 * an equal distance along the line joining their centres, until they do not intersect.
+	 * @param a - First Ball
+	 * @param b - Second Ball
+	 */
+	public void separate(Ball a, Ball b){
+		while(checkCollision(a,b)){
+			Vec r = b.pos.minus(a.pos);
+			r.scale(0.01/r.mag());
+			a.pos.subtract(r);
+			b.pos.add(r);
+		}
+	}
+	
 }
