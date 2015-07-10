@@ -15,7 +15,7 @@ import myio.FileProcessor;
 
 public class PhysicsSim implements ChangeListener{
 	
-	private static final String VERSION = "v1.4c";
+	private static final String VERSION = "v1.4d";
 	
 	//GUI fields
 	Image img;
@@ -565,8 +565,10 @@ public class PhysicsSim implements ChangeListener{
 			pan.x=image.getWidth()/2 - wallx*zoom/2;
 			pan.y=image.getHeight()/2 - wally*zoom/2;
 		}else{
-			pan = (invTransform(centerOM()).scale(-1*zoom))
+			Vec c = (invTransform(centerOM()).scale(-1*zoom))
 					.plus(new Vec(image.getWidth()/2, image.getHeight()/2));
+			pan.x = c.x;
+			pan.y = c.y;
 		}
 		jf.repaint();
 	}
