@@ -15,7 +15,7 @@ import myio.FileProcessor;
 
 public class PhysicsSim implements ChangeListener{
 	
-	private static final String VERSION = "v1.4b";
+	private static final String VERSION = "v1.4c";
 	
 	//GUI fields
 	Image img;
@@ -182,7 +182,7 @@ public class PhysicsSim implements ChangeListener{
 		gravitySpinner.setPreferredSize(new Dimension(70,20));
 		gravitySpinner.addChangeListener(this);
 		
-		massSpinner = new JSpinner(new SpinnerNumberModel(10,-1,1000,5.0));
+		massSpinner = new JSpinner(new SpinnerNumberModel(10,1,1000,5.0));
 		massSpinner.setPreferredSize(new Dimension(70,20));
 		massSpinner.addChangeListener(this);
 		
