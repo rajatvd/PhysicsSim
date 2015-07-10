@@ -15,7 +15,7 @@ import myio.FileProcessor;
 
 public class PhysicsSim implements ChangeListener{
 	
-	private static final String VERSION = "v1.4";
+	private static final String VERSION = "v1.4b";
 	
 	//GUI fields
 	Image img;
@@ -106,9 +106,13 @@ public class PhysicsSim implements ChangeListener{
 		
 		//jframe
 		jf = new JFrame("Physics Simulation "+VERSION);
-		jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//		jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		jf.setVisible(true);
-//		jf.setResizable(false);
+		jf.addWindowListener(new WindowAdapter(){
+			public void windowClosing(WindowEvent e){
+				exit();
+			}
+		});
 		
 		//canvas image
 		img = jf.createImage(imagex, imagey);
@@ -513,6 +517,16 @@ public class PhysicsSim implements ChangeListener{
 		
 	}
 	
+	/**
+	 * Show a message dialog and exit from the program.
+	 */
+	public void exit() {
+		String msg = "Physics Simulation "+VERSION+" made by Rajat V D\n" +
+				"Copyright \u24b8 2015";
+		JOptionPane.showMessageDialog(jf, msg, "Exiting...", JOptionPane.PLAIN_MESSAGE);
+		System.exit(0);
+	}
+
 	//implementation for change listener
 	public void stateChanged(ChangeEvent e) {
 		Object source = e.getSource();
@@ -846,7 +860,7 @@ public class PhysicsSim implements ChangeListener{
 		
 		//check if collision is proper
 		if(U.dot(n)>=0){
-			separate(a,b);
+//			separate(a,b);
 			return;
 		}
 		
