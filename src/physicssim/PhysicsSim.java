@@ -15,7 +15,7 @@ import myio.FileProcessor;
 
 public class PhysicsSim implements ChangeListener{
 	
-	private static final String VERSION = "v1.4d";
+	private static final String VERSION = "v1.4e";
 	
 	//GUI fields
 	Image img;
@@ -522,7 +522,7 @@ public class PhysicsSim implements ChangeListener{
 	 */
 	public void exit() {
 		String msg = "Physics Simulation "+VERSION+" made by Rajat V D\n" +
-				"Copyright \u24b8 2015";
+				"2015";
 		JOptionPane.showMessageDialog(jf, msg, "Exiting...", JOptionPane.PLAIN_MESSAGE);
 		System.exit(0);
 	}
