@@ -75,6 +75,29 @@ public class MouseStateHandler {
 	}
 	
 	/**
+	 * Perform the click action of either the left or right
+	 * state, based on which mouse button was used
+	 * @param e - MouseEvent of click
+	 */
+	public void clickAction(MouseEvent e) {
+		if(SwingUtilities.isRightMouseButton(e)){
+			rightButtonState.mouseClickAction(e);
+		}else if(SwingUtilities.isLeftMouseButton(e)){
+			leftButtonState.mouseClickAction(e);
+		}	
+	}
+	
+	/**
+	 * Perform the move action of both the left and right
+	 * state
+	 * @param e - MouseEvent of move
+	 */
+	public void moveAction(MouseEvent e) {
+		rightButtonState.mouseMoveAction(e);
+		leftButtonState.mouseMoveAction(e);	
+	}
+	
+	/**
 	 * Calls the drawState function of both the left and right 
 	 * mouse button states of this handler.
 	 * @param g - Graphics object to pass into drawState
@@ -83,5 +106,6 @@ public class MouseStateHandler {
 		rightButtonState.drawState(g);
 		leftButtonState.drawState(g);
 	}
+
 	
 }

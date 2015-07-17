@@ -73,6 +73,16 @@ public class MouseVecCreator implements MouseState {
 	public void drawState(Graphics g) {
 		if(isCreatingVec)vec.draw(g, start, vecColor);
 	}
+
+	public void mouseClickAction(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void mouseMoveAction(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
 	
 	
 	

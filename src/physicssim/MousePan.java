@@ -18,7 +18,6 @@ public class MousePan implements MouseState {
 	
 	/**
 	 * Sets the start of the pan addition to the press point.
-	 * o is not used
 	 */
 	public void mousePressAction(MouseEvent e) {
 		oldPan.x = pan.x;
@@ -29,8 +28,6 @@ public class MousePan implements MouseState {
 	
 	/**
 	 * Changes the pan Vec while dragging to (position of mouse)-(start) added to the oldPan Vec.
-	 * o is assumed to be a Vec, and its coordinates are set as the pan's
-	 * coordinates.
 	 */
 	public void mouseDragAction(MouseEvent e) {
 		end.x=e.getX();
@@ -41,15 +38,14 @@ public class MousePan implements MouseState {
 	}
 	
 	/**
-	 * Replaces the oldPan with the current pan Vec.
-	 * o is not used
+	 * Nothing is done on mouse release.
 	 */
 	public void mouseReleaseAction(MouseEvent e) {
 		
 	}
 	
 	/**
-	 * Set the Vec object which will be treated as the pan Vec
+	 * Set the Vec object which will be treated as the pan Vec.
 	 * @param p - the Vec object to treat as pan
 	 */
 	public void setPanVec(Vec p){
@@ -57,4 +53,14 @@ public class MousePan implements MouseState {
 	}
 
 	public void drawState(Graphics g) {}
+
+	public void mouseClickAction(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void mouseMoveAction(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
 }

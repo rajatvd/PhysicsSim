@@ -34,7 +34,7 @@ public class PhysicsSim implements ChangeListener{
 	double zoom=1;
 	
 	//coefficient of restitution, gravity contant, ball creation mass
-	double res=1, grav=5, mass;
+	double res=1, grav=5, mass=1;
 	
 	//magnitude of normal momentum transfer to walls per timestep, 
 	//factor to scale drawn vector length by, to obtain velocity
@@ -42,7 +42,8 @@ public class PhysicsSim implements ChangeListener{
 	
 	//wall width and height, ball creation radius
 	int wallx=1100, wally=650, radius=6,
-		imagex = 2300,imagey = 1200;
+		imagex = 2300,imagey = 1200,
+		crosshairW = 20, crosshairH = 20;
 	
 	//thread delay
 	final int DELAY = 10;
@@ -69,13 +70,15 @@ public class PhysicsSim implements ChangeListener{
 			chooseBGColor = new JButton("Choose background colour"),
 			playPause = new JButton("Pause"),
 			reset = new JButton("Reset"),
-			centerView = new JButton("Center View");
+			centerView = new JButton("Center View"),
+			lockCamera = new JButton("Lock Camera");
 
 	
 	Color ballColor = Color.white,
 		  vecColor = Color.yellow,
 		  bgColor = new Color(0,0,0,255), 
-		  rawBG = Color.black;//backgournd color without transparency
+		  rawBG = Color.black,//backgournd color without transparency
+		  crosshairColor = Color.magenta;
 	
 	boolean drawMomentum = false,
 			walls = false,
@@ -95,6 +98,9 @@ public class PhysicsSim implements ChangeListener{
 	MouseStateHandler mouseHand = new MouseStateHandler();
 	MousePan panState = new MousePan();
 	MouseVecCreator vecState;
+	MouseReleaseLocator ballTracker = new MouseReleaseLocator();
+	
+	Ball trackedBall;
 	
 	
 	public static void main(String[] args) {
@@ -123,6 +129,7 @@ public class PhysicsSim implements ChangeListener{
 		//simulation canvas
 		image = new JPanel(){
 			public void paintComponent(Graphics g){
+				updatePan();
 				clearImage(g2);
 				transform(g2);
 				drawBodies(g2);
@@ -136,6 +143,7 @@ public class PhysicsSim implements ChangeListener{
 //				vecState.setGraphics(gg);
 				mouseHand.drawStates(g);
 				drawVecs(g);
+				if(trackedBall!=null)drawCrosshair(g);
 				invTransform(g2);
 			}
 		};
@@ -182,7 +190,7 @@ public class PhysicsSim implements ChangeListener{
 		gravitySpinner.setPreferredSize(new Dimension(70,20));
 		gravitySpinner.addChangeListener(this);
 		
-		massSpinner = new JSpinner(new SpinnerNumberModel(10,1,1000,5.0));
+		massSpinner = new JSpinner(new SpinnerNumberModel(1,1,1000,5.0));
 		massSpinner.setPreferredSize(new Dimension(70,20));
 		massSpinner.addChangeListener(this);
 		
@@ -226,6 +234,7 @@ public class PhysicsSim implements ChangeListener{
 				bodies.clear();
 				zoom=1;
 				centreView();
+				trackedBall = null;
 			}		
 		});
 		centerView.addActionListener(new ActionListener(){
@@ -243,6 +252,17 @@ public class PhysicsSim implements ChangeListener{
 					playPause.setText("Pause");
 				}
 			}		
+		});
+		lockCamera.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent arg0) {
+				if(lockCamera.getText().equals("Lock Camera")){
+					mouseHand.setLeftState(ballTracker);
+					lockCamera.setText("Create ball");
+				}else{
+					mouseHand.setLeftState(vecState);
+					lockCamera.setText("Lock Camera");
+				}
+			}
 		});
 		
 		
@@ -291,7 +311,11 @@ public class PhysicsSim implements ChangeListener{
 				bf.getGraphics().drawImage(img, 0, 0,null);
 				bf.getGraphics().dispose();
 				FileProcessor fp = new FileProcessor();
-				fp.setFile(jf, ".png", true);
+				if(!fp.setFile(jf, ".png", true)){
+					running = temp;
+					bf.flush();
+					return;
+				}
 				try {
 					ImageIO.write(bf, "png", fp.getFile());
 				} catch (IOException e) {
@@ -352,6 +376,7 @@ public class PhysicsSim implements ChangeListener{
 						.addComponent(chooseColor)
 						.addComponent(chooseBGColor)
 						.addComponent(playPause)
+						.addComponent(lockCamera)
 						)
 				);
 		
@@ -401,6 +426,7 @@ public class PhysicsSim implements ChangeListener{
 						.addComponent(chooseColor)
 						.addComponent(chooseBGColor)
 						.addComponent(playPause)
+						.addComponent(lockCamera)
 						)
 				);
 		gl.setAutoCreateGaps(true);
@@ -411,50 +437,36 @@ public class PhysicsSim implements ChangeListener{
 		//mouse response
 		vecState = new MouseVecCreator();
 		panState.setPanVec(pan);
-		mouseHand.setLeftState(vecState);
+		ballTracker.color = crosshairColor;
+		ballTracker.w = crosshairW;
+		ballTracker.h = crosshairH;
+		
+		mouseHand.setLeftState(ballTracker);
+//		mouseHand.setLeftState(vecState);
 		mouseHand.setRightState(panState);
 		
 		MouseAdapter mouse = new MouseAdapter(){
 			
+			public void mouseClicked(MouseEvent e){
+				mouseHand.clickAction(e);
+			}
+			
 			public void mousePressed(MouseEvent e){
-//				clickPos.x = e.getX();
-//				clickPos.y = e.getY();
-//				mass = (Double) massSpinner.getValue();
-//				oldPan.x = pan.x;
-//				oldPan.y = pan.y;
-				
 				mouseHand.pressAction(e);
+				if(mouseHand.getRightState().equals(panState) 
+						&& SwingUtilities.isRightMouseButton(e)){
+					trackedBall = null;
+				}
 			}
 			
 			public void mouseDragged(MouseEvent e){
-//				end.x = e.getX();
-//				end.y = e.getY();
-//				if(SwingUtilities.isRightMouseButton(e)){
-//					//to dynmically change the pan while dragging right click
-//					pan = oldPan.plus(end.minus(clickPos));
-//				}else{
-//					isCreatingBall = true;
-//				}
-				
 				mouseHand.dragAction(e);
 				jf.repaint();
 			}
 			
 			public void mouseReleased(MouseEvent e){
-//				isCreatingBall = false;
-//				if(SwingUtilities.isLeftMouseButton(e)){
-//					Vec pos = invTransform(clickPos);
-//					Vec vel = new Vec(e.getX(), e.getY()).minus(clickPos).scale(sensitivity/zoom);
-//					bodies.add(new Ball(pos, 
-//							vel,
-//							radius, 
-//							mass,
-//							ballColor));
-//				}
-//				clickPos.x = 0;clickPos.y = 0;
-//				end.x = 0;end.y = 0;
-				
 				mouseHand.releaseAction(e);
+				
 				if(vecState.hasVec()){
 					Vec vel = vecState.getVec().scale(sensitivity/zoom);
 					Vec pos = invTransform(vecState.getOrigin());
@@ -464,8 +476,16 @@ public class PhysicsSim implements ChangeListener{
 							mass,
 							ballColor));
 				}
+				if(ballTracker.hasVec()){
+					trackBall(ballTracker.getVec());
+				}
 				
 				updateState();
+				jf.repaint();
+			}
+			
+			public void mouseMoved(MouseEvent e){
+				mouseHand.moveAction(e);
 				jf.repaint();
 			}
 			
@@ -481,6 +501,7 @@ public class PhysicsSim implements ChangeListener{
 				pan.subtract(mousePos.scaleV(newZoom/zoom).minus(mousePos));
 				zoom=newZoom;
 				jf.repaint();
+				updateState();
 			}
 		};
 		
@@ -492,31 +513,65 @@ public class PhysicsSim implements ChangeListener{
 		updateState();
 		
 		//simulation thread
-		thread = new Thread(new Runnable(){
-			public void run(){
-				while(true){
-					try {
-						Thread.sleep(DELAY);
-						if(!running)continue;
-						update();
-						jf.repaint();
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					} catch (ArrayIndexOutOfBoundsException e) {
-						e.printStackTrace();
-						bodies.clear();
-					}
-				}
-			}
-		});
+//		thread = new Thread(new Runnable(){
+//			public void run(){
+//				while(true){
+//					try {
+//						Thread.sleep(DELAY);
+//						if(!running)continue;
+//						update();
+////						jf.repaint();
+//					} catch (InterruptedException e) {
+//						e.printStackTrace();
+//					} catch (ArrayIndexOutOfBoundsException e) {
+//						e.printStackTrace();
+//						bodies.clear();
+//					}
+//				}
+//			}
+//		});
 		
-		thread.start();
 		
 		jf.setContentPane(main);
 		jf.setSize(wallx+240,wally+70);
 		
+//		thread.start();
+		
+		while(true){
+			try {
+				Thread.sleep(DELAY);
+				if(!running)continue;
+				update();
+				jf.repaint();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} catch (ArrayIndexOutOfBoundsException e) {
+				e.printStackTrace();
+				bodies.clear();
+			}
+		}
+		
 	}
 	
+	/**
+	 * Tracks the first ball found which contains the point given by Vec v.
+	 * If no such ball is found, no tracking is done.
+	 * @param v - Defines the point which is used to find a ball to track
+	 */
+	public void trackBall(Vec v) {
+		trackedBall = null;
+		for(int i=0;i<bodies.size();i++){
+			Ball a = (Ball) bodies.elementAt(i);
+			Vec c = transform(a.pos);
+			if(v.minus(c).mag()<a.r*zoom){
+				System.out.println(a.r*zoom);
+				trackedBall = a;
+				return;
+			}
+		}
+		System.out.println(trackedBall);
+	}
+
 	/**
 	 * Show a message dialog and exit from the program.
 	 */
@@ -560,6 +615,12 @@ public class PhysicsSim implements ChangeListener{
 	
 	//Graphics functions:
 	
+	public void drawCrosshair(Graphics g){
+		Vec centre = new Vec(image.getWidth()/2,image.getHeight()/2);
+		g.setColor(crosshairColor);
+		g.drawOval((int)centre.x-crosshairW/2, (int)centre.y-crosshairH/2, crosshairW, crosshairH);
+	}
+	
 	public void centreView(){
 		if(bodies.size()==0){
 			pan.x=image.getWidth()/2 - wallx*zoom/2;
@@ -567,8 +628,7 @@ public class PhysicsSim implements ChangeListener{
 		}else{
 			Vec c = (invTransform(centerOM()).scale(-1*zoom))
 					.plus(new Vec(image.getWidth()/2, image.getHeight()/2));
-			pan.x = c.x;
-			pan.y = c.y;
+			pan.set(c);
 		}
 		jf.repaint();
 	}
@@ -588,7 +648,7 @@ public class PhysicsSim implements ChangeListener{
 	}
 	
 	/**
-	 * draw all bodies
+	 * Draw all bodies
 	 * @param g - Graphics
 	 */
 	public void drawBodies(Graphics g){	
@@ -608,7 +668,7 @@ public class PhysicsSim implements ChangeListener{
 	
 	
 	/**
-	 * to draw total momentum vector from the center of mass
+	 * To draw total momentum vector from the center of mass
 	 * @param g - Graphics to draw with
 	 */
 	public void drawMomentum(Graphics g){
@@ -618,7 +678,7 @@ public class PhysicsSim implements ChangeListener{
 			b=bodies.get(i);
 			s.add(b.vel.scaleV(1/b.invMass)); 
 		}
-		s.scale(zoom/sensitivity/10).draw(g, centerOM(), vecColor);
+		s.scale(zoom/sensitivity).draw(g, centerOM(), vecColor);
 	}
 	
 	/**
@@ -674,6 +734,7 @@ public class PhysicsSim implements ChangeListener{
 		return v.plus(-pan.x, -pan.y).scaleV(1/zoom);
 	}
 	
+	
 	//State managment:
 	
 	/**
@@ -682,7 +743,7 @@ public class PhysicsSim implements ChangeListener{
 	public void updateState(){
 		state.setBodies(bodies);
 		state.walls = walls;
-		state.pan = pan;
+		state.pan.set(pan);
 		state.zoom = zoom;
 		state.grav = grav;
 		state.res = res;
@@ -695,7 +756,7 @@ public class PhysicsSim implements ChangeListener{
 	public void putState(){
 		walls = state.walls;
 		wallsCB.setSelected(walls);
-		pan = state.pan;
+		pan.set(state.pan);
 		zoom = state.zoom;
 		grav = state.grav;
 		gravitySpinner.setValue(grav);
@@ -706,6 +767,7 @@ public class PhysicsSim implements ChangeListener{
 		rawBG = c;
 	}
 	
+	
 	//Physics functions:
 	
 	/**
@@ -715,6 +777,11 @@ public class PhysicsSim implements ChangeListener{
 	public void update() throws ArrayIndexOutOfBoundsException{
 		wallMomentum = 0;
 		Ball a,b;
+//		for(int i=0;i<bodies.size();i++){
+//			a = (Ball) bodies.elementAt(i);
+//			a.newAcc = new Vec(Vec.ZERO);
+//			a.acc = new Vec(Vec.ZERO);
+//		}
 		for(int i=0;i<bodies.size();i++){
 			for(int j=0;j<bodies.size();j++){
 				if(i==j)continue;
@@ -727,14 +794,23 @@ public class PhysicsSim implements ChangeListener{
 				}
 			}
 			if(walls)checkWall((Ball) bodies.elementAt(i));
+//			bodies.elementAt(i).verletUpdate();
+//			bodies.elementAt(i).velUpdate();
 			bodies.elementAt(i).update();
 		}
-
+//		updatePan();
 //		System.out.println(wallMomentum!=0?wallMomentum:"");
 		energyLab.setText(String.format("Kinetic Energy: %.8g", kineticEnergy()));
 	}
 	
 	
+	public void updatePan() {
+		Vec centre = new Vec(image.getWidth()/2,image.getHeight()/2);
+		if(trackedBall!=null){
+			pan.set(trackedBall.pos.scaleV(-zoom).plus(centre));
+		}
+	}
+
 	public boolean checkCollision(Ball a, Ball b){
 		return a.pos.minus(b.pos).mag()<a.r+b.r;
 	}
@@ -781,40 +857,26 @@ public class PhysicsSim implements ChangeListener{
 //		a.vel.add(r.scaleV(grav/(Math.pow(r.mag(),3)*b.invMass)));
 //		b.vel.add(r.scaleV(-grav/(Math.pow(r.mag(),3)*a.invMass)));
 		
+//		a.setAcc(a.newAcc.plus(i.scaleV(a.invMass)));
+//		b.setAcc(b.newAcc.plus(i.scaleV(-b.invMass)));
+		
 		a.impulse(i);
-		b.impulse(i.scale(-1));
+		b.impulse(i.scaleV(-1));
 	}
 	
-//		Vec ua = a.vel, ub = b.vel;
-//		// p = maua + mbub
-//		Vec p = ua.scaleV(a.mass).plus(ub.scaleV(b.mass));
-//		Vec n = b.pos.minus(a.pos);
-//		n.scale(1/(n.mag()));
-//		// n = unit vector joining centres
-////		System.out.println(n.mag());
-//		// normal component of momentum
-//		Vec pn = n.scaleV((float)p.dot(n));
-//		Vec uan = n.scaleV((float)ua.dot(n)), ubn = n.scaleV((float)ub.dot(n));
-		/*
-		 *  OLD CALCULATIONS
-		 *  va - vb = rest(ub - ua)
-		 *  va = vb + rest(ub - ua)
-		 *  p = mava + mbvb
-		 *  p = mavb + marest(ub - ua) + mbvb
-		 *  p - marest(ub - ua) = vb(ma + mb)
-		 *  vb = [p - marest(ub - ua)]/(ma + mb)
-		 *  va = [p - marest(ub - ua) + marest(ub - ua) + mbrest(ub - ua)]/(ma + mb)
-		 *  va = [p + mbrest(ub - ua)]/(ma + mb)
-		 *  
-		 */
-//		if(ub.minus(ua).dot(n)>0)return;
-//		Vec van = pn.add(ubn.minus(uan).scale((float)b.mass*rest)).scale((float)1.0/(a.mass+b.mass));
-//		Vec vbn = pn.minus(ubn.minus(uan).scale((float)a.mass*rest)).scale((float)1.0/(a.mass+b.mass));
-//		a.vel = van.add(ua.subtract(uan));//.scale(1/(n.x*n.x+n.y*n.y));
-//		b.vel = vbn.add(ub.subtract(ubn));//.scale(1/(n.x*n.x+n.y*n.y));
-//		System.out.println(p.minus(a.vel.scaleV(a.mass).plus(b.vel.scaleV(b.mass))).mag());
-		
-		
+	/*
+	 *  OLD CALCULATIONS
+	 *  va - vb = rest(ub - ua)
+	 *  va = vb + rest(ub - ua)
+	 *  p = mava + mbvb
+	 *  p = mavb + marest(ub - ua) + mbvb
+	 *  p - marest(ub - ua) = vb(ma + mb)
+	 *  vb = [p - marest(ub - ua)]/(ma + mb)
+	 *  va = [p - marest(ub - ua) + marest(ub - ua) + mbrest(ub - ua)]/(ma + mb)
+	 *  va = [p + mbrest(ub - ua)]/(ma + mb)
+	 *  
+	 */
+				
 	/*
 	 * NEW CALCULATIONS:(BETTER)
 	 * 
@@ -847,7 +909,7 @@ public class PhysicsSim implements ChangeListener{
 	 */
 	
 	/**
-	 * Collide a and b
+	 * Collides a and b
 	 * @param a - first ball
 	 * @param b - second ball
 	 * @param rest - coefficient of restitution for the collision
@@ -862,7 +924,7 @@ public class PhysicsSim implements ChangeListener{
 		
 		//check if collision is proper
 		if(U.dot(n)>=0){
-//			separate(a,b);
+			separate(a,b);
 			return;
 		}
 		

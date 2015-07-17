@@ -39,7 +39,15 @@ public class Vec {
 		y=v.y;
 		z=v.z;
 	}
-
+	
+	
+	public Vec set(Vec v){
+		x=v.x;
+		y=v.y;
+		z=v.z;
+		return this;
+	}
+	
 	public Vec add(Vec v){
 		x+=v.x;
 		y+=v.y;
@@ -141,10 +149,10 @@ public class Vec {
 		int mag = (int) this.mag();
 		Graphics2D g2 = (Graphics2D)g;
 		g2.setColor(Color.orange);
-		
+		double xx = x, yy = y;
 		//transform
 		g2.translate(origin.x, origin.y);
-		g2.rotate(Math.atan2(y,x));
+		g2.rotate(Math.atan2(yy,xx));
 		
 		//draw vector
 		g2.drawLine(0, 0, mag, 0);
@@ -153,7 +161,7 @@ public class Vec {
 		g2.fillPolygon(xs,ys,3);
 		
 		//undo transform
-		g2.rotate(-Math.atan2(y,x));
+		g2.rotate(-Math.atan2(yy,xx));
 		g2.translate(-origin.x, -origin.y);
 	}
 	

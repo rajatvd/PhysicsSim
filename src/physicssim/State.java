@@ -11,6 +11,8 @@ public class State {
 	private Vector<RigidBody> bodies;
 	private FileProcessor fp = new FileProcessor();
 	
+	private String nl = "\n";
+	
 	//state information about camera view
 	public Vec pan = new Vec();
 	public double zoom = 1, grav=1, res=1;
@@ -90,12 +92,12 @@ public class State {
 		Vec bg = new Vec(bgColor.getRed(),
 							  bgColor.getGreen(),
 							  bgColor.getBlue());
-		info += walls+"\n";
-		info += pan+"\n";
-		info += zoom+"\n";
-		info += grav+"\n";
-		info += res+"\n";
-		info += bg+"\n";
+		info += walls+nl;
+		info += pan+nl;
+		info += zoom+nl;
+		info += grav+nl;
+		info += res+nl;
+		info += bg+nl;
 		
 		//rigidbody state information
 		for(int i=0;i<bodies.size();i++){
@@ -103,21 +105,21 @@ public class State {
 			RigidBody a = bodies.get(i);
 			
 			//delimiter
-			info += "NEXT BODY\n";
+			info += "NEXT BODY"+nl;
 			
 			//generic rigidbody information
 			Vec color = new Vec(a.c.getRed(),
 								a.c.getGreen(),
 								a.c.getBlue());
-			buffer += a.pos+"\n";
-			buffer += a.vel+"\n";
-			buffer += a.invMass+"\n";
-			buffer += color+"\n";
+			buffer += a.pos+nl;
+			buffer += a.vel+nl;
+			buffer += a.invMass+nl;
+			buffer += color+nl;
 			
 			//type specific information
 			if(a instanceof Ball){
-				buffer += ((Ball) a).r+"\n";
-				buffer = "Ball\n"+buffer;
+				buffer += ((Ball) a).r+nl;
+				buffer = "Ball"+nl+buffer;
 			}
 			
 			info+=buffer;
