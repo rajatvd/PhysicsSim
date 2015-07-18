@@ -15,7 +15,7 @@ import myio.FileProcessor;
 
 public class PhysicsSim implements ChangeListener{
 	
-	private static final String VERSION = "v1.4e";
+	private static final String VERSION = "v1.5.0";
 	
 	//GUI fields
 	Image img;
