@@ -15,7 +15,7 @@ import myio.FileProcessor;
 
 public class PhysicsSim implements ChangeListener{
 	
-	private static final String VERSION = "v1.5.0";
+	private static final String VERSION = "v1.5.1";
 	
 	//GUI fields
 	Image img;
@@ -441,8 +441,8 @@ public class PhysicsSim implements ChangeListener{
 		ballTracker.w = crosshairW;
 		ballTracker.h = crosshairH;
 		
-		mouseHand.setLeftState(ballTracker);
-//		mouseHand.setLeftState(vecState);
+//		mouseHand.setLeftState(ballTracker);
+		mouseHand.setLeftState(vecState);
 		mouseHand.setRightState(panState);
 		
 		MouseAdapter mouse = new MouseAdapter(){
