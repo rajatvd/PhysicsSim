@@ -12,6 +12,27 @@ import java.awt.event.MouseEvent;
  */
 public interface MouseState {
 	
+	public static final MouseState doNothing = new MouseState(){
+
+		public void mousePressAction(MouseEvent e) {
+		}
+
+		public void mouseDragAction(MouseEvent e) {
+		}
+
+		public void mouseReleaseAction(MouseEvent e) {
+		}
+
+		public void mouseClickAction(MouseEvent e) {
+		}
+
+		public void mouseMoveAction(MouseEvent e) {
+		}
+
+		public void drawState(Graphics g) {
+		}
+		
+	};
 	
 	/**
 	 * Perform the press action of this MouseState

@@ -58,8 +58,8 @@ public class State {
 	/**
 	 * Loads a new state from a file
 	 */
-	public void loadState(){
-		if(!fp.setFile(null, ".state", false))return;
+	public boolean loadState(){
+		if(!fp.setFile(null, ".state", false))return false;
 		String[] bodyinfo = fp.readFile("NEXT BODY");
 		
 		String[] init = bodyinfo[0].trim().split("\n");
@@ -77,6 +77,7 @@ public class State {
 		for(int i=1;i<bodyinfo.length;i++){
 			bodies.add(readInfo(bodyinfo[i]));		
 		}
+		return true;
 	}
 	
 	/**

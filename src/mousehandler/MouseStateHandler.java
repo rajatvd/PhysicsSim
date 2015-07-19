@@ -9,14 +9,13 @@ import javax.swing.SwingUtilities;
 public class MouseStateHandler {
 	
 	@SuppressWarnings("unused")
-	private static final String VERSION = "1.0";
+	private static final String VERSION = "1.2";
 	
-	private MouseState leftButtonState, rightButtonState;
+	private MouseState leftButtonState, rightButtonState, allButtonState;
 	
 	public MouseState getLeftState() {
 		return leftButtonState;
 	}
-	
 	/**
 	 * @param s - the MouseState to set as leftButtonState
 	 */
@@ -27,7 +26,6 @@ public class MouseStateHandler {
 	public MouseState getRightState() {
 		return rightButtonState;
 	}
-	
 	/**
 	 * @param s - the MouseState to set as leftButtonState
 	 */
@@ -35,12 +33,25 @@ public class MouseStateHandler {
 		rightButtonState = s;
 	}
 	
+	public MouseState getAllState() {
+		return allButtonState;
+	}
+	/**
+	 * @param s - the MouseState to set as allButtonState, the state which acts for any mouse button used
+	 */
+	public void setAllState(MouseState s) {
+		allButtonState = s;
+	}
+	
+	
+	
 	/**
 	 * Perform the press action of either the left or right
 	 * state, based on which mouse button was used
 	 * @param e - MouseEvent of press
 	 */
 	public void pressAction(MouseEvent e){
+		if(allButtonState!=null)allButtonState.mousePressAction(e);
 		if(SwingUtilities.isRightMouseButton(e)){
 			rightButtonState.mousePressAction(e);
 		}else if(SwingUtilities.isLeftMouseButton(e)){
@@ -54,6 +65,7 @@ public class MouseStateHandler {
 	 * @param e - MouseEvent of drag
 	 */
 	public void dragAction(MouseEvent e){
+		if(allButtonState!=null)allButtonState.mouseDragAction(e);
 		if(SwingUtilities.isRightMouseButton(e)){
 			rightButtonState.mouseDragAction(e);
 		}else if(SwingUtilities.isLeftMouseButton(e)){
@@ -67,6 +79,7 @@ public class MouseStateHandler {
 	 * @param e - MouseEvent of release
 	 */
 	public void releaseAction(MouseEvent e){
+		if(allButtonState!=null)allButtonState.mouseReleaseAction(e);
 		if(SwingUtilities.isRightMouseButton(e)){
 			rightButtonState.mouseReleaseAction(e);
 		}else if(SwingUtilities.isLeftMouseButton(e)){
@@ -80,6 +93,7 @@ public class MouseStateHandler {
 	 * @param e - MouseEvent of click
 	 */
 	public void clickAction(MouseEvent e) {
+		if(allButtonState!=null)allButtonState.mouseClickAction(e);
 		if(SwingUtilities.isRightMouseButton(e)){
 			rightButtonState.mouseClickAction(e);
 		}else if(SwingUtilities.isLeftMouseButton(e)){
@@ -93,6 +107,7 @@ public class MouseStateHandler {
 	 * @param e - MouseEvent of move
 	 */
 	public void moveAction(MouseEvent e) {
+		if(allButtonState!=null)allButtonState.mouseMoveAction(e);
 		rightButtonState.mouseMoveAction(e);
 		leftButtonState.mouseMoveAction(e);	
 	}
@@ -103,6 +118,7 @@ public class MouseStateHandler {
 	 * @param g - Graphics object to pass into drawState
 	 */
 	public void drawStates(Graphics g){
+		if(allButtonState!=null)allButtonState.drawState(g);
 		rightButtonState.drawState(g);
 		leftButtonState.drawState(g);
 	}

@@ -10,12 +10,13 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.*;
 
+import mousehandler.MouseState;
 import mousehandler.MouseStateHandler;
 import myio.FileProcessor;
 
 public class PhysicsSim implements ChangeListener{
 	
-	private static final String VERSION = "v1.5.1";
+	private static final String VERSION = "v1.5.2";
 	
 	//GUI fields
 	Image img;
@@ -44,6 +45,9 @@ public class PhysicsSim implements ChangeListener{
 	int wallx=1100, wally=650, radius=6,
 		imagex = 2300,imagey = 1200,
 		crosshairW = 20, crosshairH = 20;
+//		counter=0;
+	
+//	long startTime,endTime;
 	
 	//thread delay
 	final int DELAY = 10;
@@ -51,7 +55,8 @@ public class PhysicsSim implements ChangeListener{
 	//sliders
 	//3rd argument is default value
 	JSlider radiusS  = new JSlider(JSlider.HORIZONTAL, 0, 50, 6),
-			trail   = new JSlider(JSlider.HORIZONTAL, 0, 255, 0);
+			trail   = new JSlider(JSlider.HORIZONTAL, 0, 255, 0),
+			restiSlid   = new JSlider(JSlider.HORIZONTAL, 0, 100, 100);
 	
 	//labels
 	JLabel  massLab    = new JLabel("Mass:"),
@@ -209,6 +214,11 @@ public class PhysicsSim implements ChangeListener{
 		radiusS.setPaintLabels(true);
 		radiusS.addChangeListener(this);
 		
+		restiSlid.setMajorTickSpacing(20);
+		restiSlid.setPaintTicks(true);
+		restiSlid.setPaintLabels(true);
+		restiSlid.addChangeListener(this);
+		
 		
 		//buttons
 		chooseColor.addActionListener(new ActionListener(){
@@ -256,10 +266,12 @@ public class PhysicsSim implements ChangeListener{
 		lockCamera.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
 				if(lockCamera.getText().equals("Lock Camera")){
-					mouseHand.setLeftState(ballTracker);
+					mouseHand.setAllState(ballTracker);
+					mouseHand.setLeftState(MouseState.doNothing);
 					lockCamera.setText("Create ball");
 				}else{
 					mouseHand.setLeftState(vecState);
+					mouseHand.setAllState(MouseState.doNothing);
 					lockCamera.setText("Lock Camera");
 				}
 			}
@@ -294,7 +306,11 @@ public class PhysicsSim implements ChangeListener{
 			public void actionPerformed(ActionEvent arg0) {
 				boolean temp = running;
 				running = false;
-				state.loadState();
+				if(!state.loadState()){
+					running = temp;
+					return;
+				}
+				trackedBall = null;
 				putState();
 				running = temp;
 				jf.repaint();
@@ -355,6 +371,7 @@ public class PhysicsSim implements ChangeListener{
 										GroupLayout.PREFERRED_SIZE,
 								        GroupLayout.PREFERRED_SIZE)
 								)
+						.addComponent(restiSlid)
 						.addComponent(trailLab)
 						.addComponent(trail)
 						.addComponent(wallsCB)
@@ -405,6 +422,7 @@ public class PhysicsSim implements ChangeListener{
 										GroupLayout.PREFERRED_SIZE,
 								        GroupLayout.PREFERRED_SIZE)
 								)
+						.addComponent(restiSlid)
 						.addComponent(trailLab)
 						.addComponent(trail)
 						.addComponent(wallsCB)
@@ -486,7 +504,9 @@ public class PhysicsSim implements ChangeListener{
 			
 			public void mouseMoved(MouseEvent e){
 				mouseHand.moveAction(e);
-				jf.repaint();
+				if(mouseHand.getAllState()!=null && mouseHand.getAllState().equals(ballTracker)){
+					jf.repaint();
+				}
 			}
 			
 			public void mouseWheelMoved(MouseWheelEvent e){
@@ -497,11 +517,12 @@ public class PhysicsSim implements ChangeListener{
 				//with respect to zooming origin. The change in position of the object is
 				//mousePos*(newZoom/zoom) - mousePos. Subtracting this from pan causes the object to
 				//be unmoved.
-				Vec mousePos = new Vec(e.getX(),e.getY()).minus(pan);
-				pan.subtract(mousePos.scaleV(newZoom/zoom).minus(mousePos));
-				zoom=newZoom;
-				jf.repaint();
-				updateState();
+//				Vec mousePos = new Vec(e.getX(),e.getY()).minus(pan);
+//				pan.subtract(mousePos.scaleV(newZoom/zoom).minus(mousePos));
+//				zoom=newZoom;
+//				jf.repaint();
+//				updateState();
+				zoom(newZoom, new Vec(e.getX(),e.getY()));
 			}
 		};
 		
@@ -541,8 +562,15 @@ public class PhysicsSim implements ChangeListener{
 			try {
 				Thread.sleep(DELAY);
 				if(!running)continue;
+//				startTime = System.nanoTime();
 				update();
+//				endTime = System.nanoTime();
+//				System.out.println((endTime-startTime)/1e6);
+//				while(updating)continue;
+//				startTime = System.nanoTime();
 				jf.repaint();
+//				endTime = System.nanoTime();
+//				System.out.println((endTime-startTime)/1e6);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			} catch (ArrayIndexOutOfBoundsException e) {
@@ -595,18 +623,19 @@ public class PhysicsSim implements ChangeListener{
 			}else if(jsl.equals(radiusS)){
 				radius = radiusS.getValue();
 			}
-//			else if(jsl.equals(gravity)){
-//				grav = gravity.getValue();
-//			}
+			else if(jsl.equals(restiSlid)){
+				res = restiSlid.getValue()/100.0;
+				restiSpinner.setValue(res);
+			}
 		}else if(source instanceof JSpinner){
 			JSpinner js = (JSpinner)source;
 			if(js.equals(gravitySpinner)){
 				grav = (Double) gravitySpinner.getValue();
 			}else if(js.equals(massSpinner)){
-//				System.out.println("MASS CHANGED");
 				mass = (Double) massSpinner.getValue();
 			}else if(js.equals(restiSpinner)){
 				res = (Double) restiSpinner.getValue();
+				restiSlid.setValue((int) (res*100));
 			}
 		}
 		jf.repaint();
@@ -615,10 +644,43 @@ public class PhysicsSim implements ChangeListener{
 	
 	//Graphics functions:
 	
+	/**
+	 * Perform all the functions when the zoom changes
+	 * @param newZoom - new zoom amount
+	 * @param centre - the centre of the zooming(in the apparent view)
+	 */
+	public void zoom(double newZoom, Vec centre){
+		//centre is the position vector of zooming origin. Subtracting the pan away yields the position
+		//vector of an imaginary object at the zooming origin.
+		//Dividing by zoom yields the actual position vector of an imaginary object
+		//as if it were at the mouse. Multiplying by newZoom gets the new apparent position vector
+		//with respect to zooming origin. The change in position of the object is
+		//centre*(newZoom/zoom) - centre. Subtracting this from pan causes the object to
+		//be unmoved.
+		
+		//centre is now apparent position vector of an imaginary object at the zoom origin
+		centre.subtract(pan);
+		
+		//(centre*(newZoom/zoom) - centre) + (change in pan) = 
+		//net change in apparent position of imaginary object.
+		//for the object to be unmoved, net change = 0,
+		//change in pan = -(centre*(newZoom/zoom) - centre)
+		pan.subtract(centre.scaleV(newZoom/zoom).minus(centre));
+		
+		zoom=newZoom;
+		jf.repaint();
+		updateState();
+	}
+	
 	public void drawCrosshair(Graphics g){
 		Vec centre = new Vec(image.getWidth()/2,image.getHeight()/2);
 		g.setColor(crosshairColor);
-		g.drawOval((int)centre.x-crosshairW/2, (int)centre.y-crosshairH/2, crosshairW, crosshairH);
+		int w = (int)Math.max((crosshairW/2+2*trackedBall.r)*zoom, crosshairW),
+			h = (int)Math.max((crosshairH/2+2*trackedBall.r)*zoom, crosshairH);
+		g.drawOval((int)(centre.x-w/2), 
+				(int)(centre.y-h/2), 
+				w, 
+				h);
 	}
 	
 	public void centreView(){
@@ -765,6 +827,7 @@ public class PhysicsSim implements ChangeListener{
 		Color c = state.bgColor;
 		bgColor = new Color(c.getRed(),c.getGreen(),c.getBlue(),255-trail.getValue());
 		rawBG = c;
+		energyLab.setText(String.format("Kinetic Energy: %.8g", kineticEnergy()));
 	}
 	
 	
@@ -809,6 +872,7 @@ public class PhysicsSim implements ChangeListener{
 		if(trackedBall!=null){
 			pan.set(trackedBall.pos.scaleV(-zoom).plus(centre));
 		}
+		
 	}
 
 	public boolean checkCollision(Ball a, Ball b){
