@@ -12,6 +12,7 @@ public class Ball extends RigidBody{
 	
 	public Ball(RigidBody a){
 		pos = new Vec(a.pos.x, a.pos.y);
+		newPos = new Vec(a.newPos.x, a.newPos.y);
 		vel = new Vec(a.vel.x, a.vel.y);
 		c = a.c;
 		invMass = a.invMass;
@@ -21,6 +22,7 @@ public class Ball extends RigidBody{
 	
 	public Ball(){
 		pos = new Vec(0,0);
+		newPos = new Vec(0,0);
 		vel = new Vec(0,0);
 		acc = new Vec(0,0);
 		newAcc = new Vec(0,0);
@@ -61,6 +63,7 @@ public class Ball extends RigidBody{
 	
 	public Ball(Vec p, Vec vell, double rr, double masss, Color cc){
 		this(p,vell,rr,masss);
+		newPos.set(p);
 		c=cc;	
 	}
 	
@@ -80,12 +83,16 @@ public class Ball extends RigidBody{
 		vel.add(p.scaleV(invMass));
 	}
 	
-	public void verletUpdate(double gravity){
-		pos.add(vel.plus(acc.scale(0.5)));
-		getNewAcc(gravity);
+	public void verletUpdatePos(){
+		pos.add(vel.plus(acc.scale(0.5)));		
+	}
+	
+	public void verletUpdateVel(double grav){
+		getNewAcc(grav);
 		vel.add((acc.plus(newAcc)).scale(0.5));
 		acc.set(newAcc);
 	}
+	
 	
 	public void getNewAcc(double grav){
 		Vec p = new Vec();
@@ -98,6 +105,13 @@ public class Ball extends RigidBody{
 			p.add(rad.scaleV(-grav/(Math.pow(rad.mag(),3)*a.invMass)));
 		}
 		newAcc.set(p);
+	}
+	
+	public static void updatePositions(){
+		for(int i=0;i<allBalls.size();i++){
+			Ball a = (Ball) allBalls.elementAt(i);
+			a.pos.set(a.newPos);
+		}
 	}
 	
 }

@@ -6,7 +6,7 @@ import java.awt.Graphics;
 public class RigidBody {
 
 	//coordinates of centre of mass
-	Vec pos, vel, acc, newAcc;
+	Vec pos, newPos, vel, acc, newAcc;
 	//mass of body
 	double invMass;
 	

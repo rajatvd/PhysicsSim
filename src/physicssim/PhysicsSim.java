@@ -870,10 +870,15 @@ public class PhysicsSim implements ChangeListener{
 				}
 			}
 			if(walls)checkWall(a);
-			a.verletUpdate(grav);
+			a.verletUpdatePos();
 //			Ball.allBalls.elementAt(i).velUpdate();
 //			Ball.allBalls.elementAt(i).update();
 		}
+		for(int i=0;i<Ball.allBalls.size();i++){
+			a = (Ball) Ball.allBalls.elementAt(i);
+			a.verletUpdateVel(grav);
+		}
+//		Ball.updatePositions();
 //		updatePan();
 //		System.out.println(wallMomentum!=0?wallMomentum:"");
 		energyLab.setText(String.format("Kinetic Energy: %.8g", kineticEnergy()));
@@ -992,7 +997,7 @@ public class PhysicsSim implements ChangeListener{
 		
 		//check if collision is proper
 		if(U.dot(n)>=0){
-			separate(a,b);
+//			separate(a,b);
 			return;
 		}
 		
