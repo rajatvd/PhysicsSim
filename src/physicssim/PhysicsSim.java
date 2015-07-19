@@ -25,7 +25,7 @@ public class PhysicsSim implements ChangeListener{
 	JFrame jf;
 	
 	//ball collection
-	Vector<RigidBody> bodies = new Vector<RigidBody>();
+//	Vector<RigidBody> Ball.allBalls = new Vector<RigidBody>();
 	
 	//state object
 	State state = new State();
@@ -241,7 +241,7 @@ public class PhysicsSim implements ChangeListener{
 		});
 		reset.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
-				bodies.clear();
+				Ball.allBalls.clear();
 				zoom=1;
 				centreView();
 				trackedBall = null;
@@ -488,11 +488,16 @@ public class PhysicsSim implements ChangeListener{
 				if(vecState.hasVec()){
 					Vec vel = vecState.getVec().scale(sensitivity/zoom);
 					Vec pos = invTransform(vecState.getOrigin());
-					bodies.add(new Ball(pos, 
+//					Ball.allBalls.add(new Ball(pos, 
+//							vel,
+//							radius, 
+//							mass,
+//							ballColor));
+					new Ball(pos, 
 							vel,
 							radius, 
 							mass,
-							ballColor));
+							ballColor);
 				}
 				if(ballTracker.hasVec()){
 					trackBall(ballTracker.getVec());
@@ -575,7 +580,7 @@ public class PhysicsSim implements ChangeListener{
 				e.printStackTrace();
 			} catch (ArrayIndexOutOfBoundsException e) {
 				e.printStackTrace();
-				bodies.clear();
+				Ball.allBalls.clear();
 			}
 		}
 		
@@ -588,8 +593,8 @@ public class PhysicsSim implements ChangeListener{
 	 */
 	public void trackBall(Vec v) {
 		trackedBall = null;
-		for(int i=0;i<bodies.size();i++){
-			Ball a = (Ball) bodies.elementAt(i);
+		for(int i=0;i<Ball.allBalls.size();i++){
+			Ball a = (Ball) Ball.allBalls.elementAt(i);
 			Vec c = transform(a.pos);
 			if(v.minus(c).mag()<a.r*zoom){
 				System.out.println(a.r*zoom);
@@ -644,6 +649,15 @@ public class PhysicsSim implements ChangeListener{
 	
 	//Graphics functions:
 	
+
+	public void updatePan() {
+		Vec centre = new Vec(image.getWidth()/2,image.getHeight()/2);
+		if(trackedBall!=null){
+			pan.set(trackedBall.pos.scaleV(-zoom).plus(centre));
+		}
+		
+	}
+	
 	/**
 	 * Perform all the functions when the zoom changes
 	 * @param newZoom - new zoom amount
@@ -684,7 +698,7 @@ public class PhysicsSim implements ChangeListener{
 	}
 	
 	public void centreView(){
-		if(bodies.size()==0){
+		if(Ball.allBalls.size()==0){
 			pan.x=image.getWidth()/2 - wallx*zoom/2;
 			pan.y=image.getHeight()/2 - wally*zoom/2;
 		}else{
@@ -714,8 +728,8 @@ public class PhysicsSim implements ChangeListener{
 	 * @param g - Graphics
 	 */
 	public void drawBodies(Graphics g){	
-		for(int i=0;i<bodies.size();i++){
-			bodies.elementAt(i).drawBody(g);
+		for(int i=0;i<Ball.allBalls.size();i++){
+			Ball.allBalls.elementAt(i).drawBody(g);
 		}		
 	}
 		
@@ -736,8 +750,8 @@ public class PhysicsSim implements ChangeListener{
 	public void drawMomentum(Graphics g){
 		RigidBody b;
 		Vec s = new Vec();
-		for(int i=0;i<bodies.size();i++){
-			b=bodies.get(i);
+		for(int i=0;i<Ball.allBalls.size();i++){
+			b=Ball.allBalls.get(i);
 			s.add(b.vel.scaleV(1/b.invMass)); 
 		}
 		s.scale(zoom/sensitivity).draw(g, centerOM(), vecColor);
@@ -751,8 +765,8 @@ public class PhysicsSim implements ChangeListener{
 		Vec s = new Vec(0,0);
 		double m=0;
 		RigidBody b;
-		for(int i=0;i<bodies.size();i++){
-			b=bodies.get(i);
+		for(int i=0;i<Ball.allBalls.size();i++){
+			b=Ball.allBalls.get(i);
 			s.add(b.pos.scaleV(1/b.invMass));
 			m+=1/b.invMass;
 		}
@@ -803,7 +817,7 @@ public class PhysicsSim implements ChangeListener{
 	 * Updates the information in the state object to match the current information
 	 */
 	public void updateState(){
-		state.setBodies(bodies);
+		state.setBodies(Ball.allBalls);
 		state.walls = walls;
 		state.pan.set(pan);
 		state.zoom = zoom;
@@ -845,34 +859,25 @@ public class PhysicsSim implements ChangeListener{
 //			a.newAcc = new Vec(Vec.ZERO);
 //			a.acc = new Vec(Vec.ZERO);
 //		}
-		for(int i=0;i<bodies.size();i++){
-			for(int j=0;j<bodies.size();j++){
+		for(int i=0;i<Ball.allBalls.size();i++){
+			for(int j=0;j<Ball.allBalls.size();j++){
 				if(i==j)continue;
-				a = (Ball) bodies.elementAt(i);
-				b = (Ball) bodies.elementAt(j);
+				a = (Ball) Ball.allBalls.elementAt(i);
+				b = (Ball) Ball.allBalls.elementAt(j);
 				//gravity
 				if(j>i)gravitate(a,b);
 				if(checkCollision(a,b)){
 					collide(a,b,res);
 				}
 			}
-			if(walls)checkWall((Ball) bodies.elementAt(i));
-//			bodies.elementAt(i).verletUpdate();
-//			bodies.elementAt(i).velUpdate();
-			bodies.elementAt(i).update();
+			if(walls)checkWall((Ball) Ball.allBalls.elementAt(i));
+//			Ball.allBalls.elementAt(i).verletUpdate();
+//			Ball.allBalls.elementAt(i).velUpdate();
+			Ball.allBalls.elementAt(i).update();
 		}
 //		updatePan();
 //		System.out.println(wallMomentum!=0?wallMomentum:"");
 		energyLab.setText(String.format("Kinetic Energy: %.8g", kineticEnergy()));
-	}
-	
-	
-	public void updatePan() {
-		Vec centre = new Vec(image.getWidth()/2,image.getHeight()/2);
-		if(trackedBall!=null){
-			pan.set(trackedBall.pos.scaleV(-zoom).plus(centre));
-		}
-		
 	}
 
 	public boolean checkCollision(Ball a, Ball b){
@@ -1012,8 +1017,8 @@ public class PhysicsSim implements ChangeListener{
 	public double kineticEnergy(){
 		RigidBody b;
 		double s=0;
-		for(int i=0;i<bodies.size();i++){
-			b=bodies.get(i);
+		for(int i=0;i<Ball.allBalls.size();i++){
+			b=Ball.allBalls.get(i);
 			s+= 0.5 / b.invMass * b.vel.dot(b.vel); 
 		}
 		return s;
@@ -1026,10 +1031,10 @@ public class PhysicsSim implements ChangeListener{
 	public double potentialEnergy(){
 		RigidBody a,b;
 		double s=0;
-		for(int i=0;i<bodies.size();i++){
-			a=bodies.get(i);
-			for(int j=i+1;j<bodies.size();j++){
-				b=bodies.get(j);
+		for(int i=0;i<Ball.allBalls.size();i++){
+			a=Ball.allBalls.get(i);
+			for(int j=i+1;j<Ball.allBalls.size();j++){
+				b=Ball.allBalls.get(j);
 				s += -1*grav/(a.invMass*b.invMass*a.pos.minus(b.pos).mag());
 			}
 		}

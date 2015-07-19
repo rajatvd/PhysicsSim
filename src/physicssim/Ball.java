@@ -2,10 +2,13 @@ package physicssim;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.util.Vector;
 
 public class Ball extends RigidBody{
 	
 	double r;
+	
+	public static Vector<RigidBody> allBalls = new Vector<RigidBody>();
 	
 	public Ball(RigidBody a){
 		pos = new Vec(a.pos.x, a.pos.y);
@@ -13,6 +16,7 @@ public class Ball extends RigidBody{
 		c = a.c;
 		invMass = a.invMass;
 		r = 1;
+		allBalls.add(this);
 	}
 	
 	public Ball(){
@@ -23,6 +27,7 @@ public class Ball extends RigidBody{
 		r = 1;
 		c = Color.white;
 		invMass = 1;
+		allBalls.add(this);
 	}
 	
 	public Ball(double xx, double yy, double rr){
@@ -75,19 +80,24 @@ public class Ball extends RigidBody{
 		vel.add(p.scaleV(invMass));
 	}
 	
-	public void verletUpdate(){
-		pos.add(vel);//.plus(acc.scale(0.5)));
+	public void verletUpdate(double gravity){
+		pos.add(vel.plus(acc.scale(0.5)));
+		getNewAcc(gravity);
 		vel.add((acc.plus(newAcc)).scale(0.5));
-//		vel.add(newAcc);
-	}
-	
-	public void setAcc(Vec a){
 		acc.set(newAcc);
-		newAcc.set(a);
 	}
 	
-	public void velUpdate(){
-		vel.add((acc.plus(newAcc)).scale(0.5));
+	public void getNewAcc(double grav){
+		Vec p = new Vec();
+		for(int i=0;i<allBalls.size();i++){
+			Ball a = (Ball) allBalls.elementAt(i);
+			if(a.equals(this))continue;
+			
+			Vec rad = this.pos.minus(a.pos);
+			if(rad.mag()<a.r+this.r)return;
+			p.add(rad.scaleV(grav/(Math.pow(rad.mag(),3)*a.invMass)));
+		}
+		newAcc.set(p);
 	}
 	
 }
