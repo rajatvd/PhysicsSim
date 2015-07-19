@@ -859,20 +859,20 @@ public class PhysicsSim implements ChangeListener{
 //			a.acc = new Vec(Vec.ZERO);
 //		}
 		for(int i=0;i<Ball.allBalls.size();i++){
+			a = (Ball) Ball.allBalls.elementAt(i);
 			for(int j=0;j<Ball.allBalls.size();j++){
 				if(i==j)continue;
-				a = (Ball) Ball.allBalls.elementAt(i);
 				b = (Ball) Ball.allBalls.elementAt(j);
 				//gravity
-				if(j>i)gravitate(a,b);
+//				if(j>i)gravitate(a,b);
 				if(checkCollision(a,b)){
 					collide(a,b,res);
 				}
 			}
-			if(walls)checkWall((Ball) Ball.allBalls.elementAt(i));
-//			Ball.allBalls.elementAt(i).verletUpdate();
+			if(walls)checkWall(a);
+			a.verletUpdate(grav);
 //			Ball.allBalls.elementAt(i).velUpdate();
-			Ball.allBalls.elementAt(i).update();
+//			Ball.allBalls.elementAt(i).update();
 		}
 //		updatePan();
 //		System.out.println(wallMomentum!=0?wallMomentum:"");

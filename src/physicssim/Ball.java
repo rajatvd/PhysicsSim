@@ -95,7 +95,7 @@ public class Ball extends RigidBody{
 			
 			Vec rad = this.pos.minus(a.pos);
 			if(rad.mag()<a.r+this.r)return;
-			p.add(rad.scaleV(grav/(Math.pow(rad.mag(),3)*a.invMass)));
+			p.add(rad.scaleV(-grav/(Math.pow(rad.mag(),3)*a.invMass)));
 		}
 		newAcc.set(p);
 	}

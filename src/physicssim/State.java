@@ -8,7 +8,7 @@ import myio.FileProcessor;
 public class State {
 	
 	//vector of rigid bodies
-	private Vector<RigidBody> bodies;
+//	private Vector<RigidBody> Ball.allBalls;
 	private FileProcessor fp = new FileProcessor();
 	
 	private String nl = "\n";
@@ -21,18 +21,18 @@ public class State {
 	
 	//constructors:
 	public State(){
-		bodies = new Vector<RigidBody>();
+//		Ball.allBalls = new Vector<RigidBody>();
 	}
 	public State(Vector<RigidBody> v){
-		bodies = v;
+		Ball.allBalls = v;
 	}
 	
 	//getter and setter
 	public Vector<RigidBody> getBodies(){
-		return bodies;
+		return Ball.allBalls;
 	}
 	public void setBodies(Vector<RigidBody> v){
-		bodies = v;
+		Ball.allBalls = v;
 	}
 	
 	/*
@@ -73,9 +73,9 @@ public class State {
 							(int)bg.y,
 							(int)bg.z);
 		
-		bodies.clear();
+		Ball.allBalls.clear();
 		for(int i=1;i<bodyinfo.length;i++){
-			bodies.add(readInfo(bodyinfo[i]));		
+			Ball.allBalls.add(readInfo(bodyinfo[i]));		
 		}
 		return true;
 	}
@@ -101,9 +101,9 @@ public class State {
 		info += bg+nl;
 		
 		//rigidbody state information
-		for(int i=0;i<bodies.size();i++){
+		for(int i=0;i<Ball.allBalls.size();i++){
 			buffer="";
-			RigidBody a = bodies.get(i);
+			RigidBody a = Ball.allBalls.get(i);
 			
 			//delimiter
 			info += "NEXT BODY"+nl;
