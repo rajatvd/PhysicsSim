@@ -1,0 +1,10 @@
+### Welcome to PhysicsSim
+This is a simulation of 2D particles in a plane. It has the following features:
+* Gravitation between the particles
+* Ability to change physical parameters like gravity strength and the restitution of collisions
+* Ability to create particles of different masses and sizes
+* Freezing of time
+The particles follow Newton's Laws of Motion and Gravitation. They can also be used to simulate both  
+an ideal gas and a real gas. Walls can be toggled on and off to simulate a closed container filled with a gas.
+With the walls turned off, gravitating systems of planets can be simulated. Solar systems with planets with their   
+own moons can be created if care is taken while creating the particles. States can be saved and loaded as well.
