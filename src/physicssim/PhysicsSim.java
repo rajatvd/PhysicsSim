@@ -1051,4 +1051,23 @@ public class PhysicsSim implements ChangeListener{
 		}
 	}
 	
+	/**
+	 * Separates two balls if they are colliding. It moves one ball along its velocity until
+	 * they do not intersect. This separation conserves angular momentum, unlike the previous one.
+	 * @param a - First Ball
+	 * @param b - Second Ball
+	 */
+	public void separate2(Ball a, Ball b){
+		while(checkCollision(a,b)){
+			Vec ra = a.vel.scaleV(1/a.vel.mag());
+			Vec rb = b.vel.scaleV(1/b.vel.mag());
+			Vec r = b.pos.minus(a.pos);
+			if(ra.dot(r)>rb.dot(r)){
+				a.pos.add(ra);
+			}else{
+				b.pos.add(rb);
+			}
+		}
+	}
+	
 }
