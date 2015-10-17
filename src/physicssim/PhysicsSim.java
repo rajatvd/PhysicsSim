@@ -39,7 +39,8 @@ public class PhysicsSim implements ChangeListener{
 	
 	//magnitude of normal momentum transfer to walls per timestep, 
 	//factor to scale drawn vector length by, to obtain velocity
-	double wallMomentum = 0, sensitivity = 0.03;
+	//number of timesteps since last ball creation
+	double wallMomentum = 0, sensitivity = 0.03, timesteps = 0;
 	
 	//wall width and height, ball creation radius
 	int wallx=1100, wally=650, radius=6,
@@ -493,6 +494,8 @@ public class PhysicsSim implements ChangeListener{
 							radius, 
 							mass,
 							ballColor));
+					timesteps = 0;
+					wallMomentum = 0;
 				}
 				if(ballTracker.hasVec()){
 					trackBall(ballTracker.getVec());
@@ -693,6 +696,7 @@ public class PhysicsSim implements ChangeListener{
 			pan.set(c);
 		}
 		jf.repaint();
+		timesteps = 0;
 	}
 	
 	public Color invert(Color c){
@@ -828,6 +832,7 @@ public class PhysicsSim implements ChangeListener{
 		bgColor = new Color(c.getRed(),c.getGreen(),c.getBlue(),255-trail.getValue());
 		rawBG = c;
 		energyLab.setText(String.format("Kinetic Energy: %.8g", kineticEnergy()));
+		timesteps = 0;
 	}
 	
 	
@@ -838,7 +843,8 @@ public class PhysicsSim implements ChangeListener{
 	 * @throws ArrayIndexOutOfBoundsException
 	 */
 	public void update() throws ArrayIndexOutOfBoundsException{
-		wallMomentum = 0;
+//		wallMomentum = 0;
+		timesteps++;
 		Ball a,b;
 //		for(int i=0;i<bodies.size();i++){
 //			a = (Ball) bodies.elementAt(i);
@@ -862,7 +868,7 @@ public class PhysicsSim implements ChangeListener{
 			bodies.elementAt(i).update();
 		}
 //		updatePan();
-//		System.out.println(wallMomentum!=0?wallMomentum:"");
+		System.out.println(wallMomentum/timesteps);
 		energyLab.setText(String.format("Kinetic Energy: %.8g", kineticEnergy()));
 	}
 	
