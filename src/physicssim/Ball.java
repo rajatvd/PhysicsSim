@@ -18,8 +18,8 @@ public class Ball extends RigidBody{
 	public Ball(){
 		pos = new Vec(0,0);
 		vel = new Vec(0,0);
-		acc = new Vec(0,0);
-		newAcc = new Vec(0,0);
+//		acc = new Vec(0,0);
+//		newAcc = new Vec(0,0);
 		r = 1;
 		c = Color.white;
 		invMass = 1;
@@ -75,19 +75,19 @@ public class Ball extends RigidBody{
 		vel.add(p.scaleV(invMass));
 	}
 	
-	public void verletUpdate(){
-		pos.add(vel);//.plus(acc.scale(0.5)));
-		vel.add((acc.plus(newAcc)).scale(0.5));
-//		vel.add(newAcc);
-	}
-	
-	public void setAcc(Vec a){
-		acc.set(newAcc);
-		newAcc.set(a);
-	}
-	
-	public void velUpdate(){
-		vel.add((acc.plus(newAcc)).scale(0.5));
-	}
+//	public void verletUpdate(){
+//		pos.add(vel);//.plus(acc.scale(0.5)));
+//		vel.add((acc.plus(newAcc)).scale(0.5));
+////		vel.add(newAcc);
+//	}
+//	
+//	public void setAcc(Vec a){
+//		acc.set(newAcc);
+//		newAcc.set(a);
+//	}
+//	
+//	public void velUpdate(){
+//		vel.add((acc.plus(newAcc)).scale(0.5));
+//	}
 	
 }
