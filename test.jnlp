@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<jnlp spec="1.0+" codebase="http://rajatvd.github.io/PhysicsSim" href="http://rajatvd.github.io/PhysicsSim">
+<jnlp spec="1.0+" codebase="http://rajatvd.github.io/PhysicsSim/test.jnlp" href="http://rajatvd.github.io/PhysicsSim">
     <information>
         <title>TEST</title>
         <vendor>TEST</vendor>
