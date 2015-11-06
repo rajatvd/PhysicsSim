@@ -16,7 +16,7 @@ import myio.FileProcessor;
 
 public class PhysicsSim implements ChangeListener{
 	
-	private static final String VERSION = "v1.5.2";
+	private static final String VERSION = "v1.5.3";
 	
 	//GUI fields
 	Image img;
@@ -93,11 +93,13 @@ public class PhysicsSim implements ChangeListener{
 	//Menu fields
 	JMenuBar menubar = new JMenuBar();
 	
-	JMenu file = new JMenu("File");
+	JMenu file = new JMenu("File"),
+		  loadPreset = new JMenu("Load preset");
 	
 	JMenuItem saveState = new JMenuItem("Save state"),
 			  loadState = new JMenuItem("Load state"),
-			  saveImage = new JMenuItem("Save image");
+			  saveImage = new JMenuItem("Save image"),
+			  threeBodyState = new JMenuItem("Three body system");
 	
 	Thread thread;
 	
@@ -111,6 +113,25 @@ public class PhysicsSim implements ChangeListener{
 	
 	public static void main(String[] args) {
 		new PhysicsSim();
+//		String s = "";
+//		try {
+////			s = PhysicsSim.class.getProtectionDomain().
+////					getCodeSource().getLocation().toURI().getPath();
+////			s = ClassLoader.getSystemClassLoader().getResource(".").getPath();
+////			URL url = ClassLoader.getSystemClassLoader().getResource("presets/threebody.state");
+//			//JOptionPane.showMessageDialog(null, url);
+//			InputStream is = ClassLoader.getSystemClassLoader().getResourceAsStream("presets/threebody.state");
+////			File f = new File(url.getFile());
+////			Scanner sc = new Scanner(f);
+//			InputStreamReader ir = new InputStreamReader(is);
+//			BufferedReader br = new BufferedReader(ir);
+////			JOptionPane.showMessageDialog(null, "stuff: "+sc.next()+sc.next());
+//			JOptionPane.showMessageDialog(null, br.readLine()+""+br.readLine());
+//		} catch (Exception e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+		
 	}
 	
 	@SuppressWarnings("serial")
@@ -291,6 +312,9 @@ public class PhysicsSim implements ChangeListener{
 		file.add(saveState);
 		file.add(loadState);
 		file.add(saveImage);
+		file.add(loadPreset);
+		
+		loadPreset.add(threeBodyState);
 		
 		//event handling for menu items
 		saveState.addActionListener(new ActionListener(){
@@ -340,6 +364,14 @@ public class PhysicsSim implements ChangeListener{
 				}
 				running = temp;
 				bf.flush();
+			}		
+		});
+		threeBodyState.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent arg0) {
+				state.loadState("presets/threebody.state");
+				trackedBall = null;
+				putState();
+				jf.repaint();
 			}		
 		});
 		

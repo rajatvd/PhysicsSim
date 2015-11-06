@@ -1,6 +1,10 @@
 package physicssim;
 
 import java.awt.Color;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Vector;
 
 import myio.FileProcessor;
@@ -56,12 +60,50 @@ public class State {
 	 * 
 	 */
 	/**
-	 * Loads a new state from a file
+	 * Loads a new state from a file selected by the user
 	 */
 	public boolean loadState(){
 		if(!fp.setFile(null, ".state", false))return false;
 		String[] bodyinfo = fp.readFile("NEXT BODY");
 		
+		loadState(bodyinfo);
+
+		return true;
+	}
+	
+	/**
+	 * Loads a new state from the file specified by the relative path
+	 */
+	public void loadState(String path){
+		//getting resource input stream and reader
+		InputStream is = ClassLoader.getSystemClassLoader().
+				getResourceAsStream(path);
+		InputStreamReader isr = new InputStreamReader(is);
+		BufferedReader br = new BufferedReader(isr);
+		
+		//reading full file
+		String line, readstuff="";
+		try {
+			while ((line = br.readLine()) != null) {
+			    readstuff+=line+"\n";
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		//getting body info
+		String[] bodyinfo = readstuff.split(("NEXT BODY"));
+		
+		loadState(bodyinfo);
+
+	}
+	
+	/**
+	 * Loads a state from a string array of the body descriptions using
+	 * the predefined format.
+	 * @param bodyinfo - Each element describes one body
+	 */
+	public void loadState(String[] bodyinfo){
 		String[] init = bodyinfo[0].trim().split("\n");
 		walls = init[0].equals("true");
 		pan = new Vec(init[1]);
@@ -77,7 +119,6 @@ public class State {
 		for(int i=1;i<bodyinfo.length;i++){
 			bodies.add(readInfo(bodyinfo[i]));		
 		}
-		return true;
 	}
 	
 	/**
