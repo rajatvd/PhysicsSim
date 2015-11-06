@@ -112,26 +112,7 @@ public class PhysicsSim implements ChangeListener{
 	
 	
 	public static void main(String[] args) {
-		new PhysicsSim();
-//		String s = "";
-//		try {
-////			s = PhysicsSim.class.getProtectionDomain().
-////					getCodeSource().getLocation().toURI().getPath();
-////			s = ClassLoader.getSystemClassLoader().getResource(".").getPath();
-////			URL url = ClassLoader.getSystemClassLoader().getResource("presets/threebody.state");
-//			//JOptionPane.showMessageDialog(null, url);
-//			InputStream is = ClassLoader.getSystemClassLoader().getResourceAsStream("presets/threebody.state");
-////			File f = new File(url.getFile());
-////			Scanner sc = new Scanner(f);
-//			InputStreamReader ir = new InputStreamReader(is);
-//			BufferedReader br = new BufferedReader(ir);
-////			JOptionPane.showMessageDialog(null, "stuff: "+sc.next()+sc.next());
-//			JOptionPane.showMessageDialog(null, br.readLine()+""+br.readLine());
-//		} catch (Exception e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-		
+		new PhysicsSim();		
 	}
 	
 	@SuppressWarnings("serial")
