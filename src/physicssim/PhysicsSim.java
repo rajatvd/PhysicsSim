@@ -44,7 +44,7 @@ public class PhysicsSim implements ChangeListener{
 	
 	//wall width and height, ball creation radius
 	int wallx=1100, wally=650, radius=6,
-		imagex = 2300,imagey = 1200,
+		imagex = 2500,imagey = 2500,
 		crosshairW = 20, crosshairH = 20;
 //		counter=0;
 	
@@ -139,20 +139,28 @@ public class PhysicsSim implements ChangeListener{
 			public void paintComponent(Graphics g){
 				updatePan();
 				clearImage(g2);
-				transform(g2);
+//				transform(g2);
+				g2.translate(imagex/2, imagey/2);
 				drawBodies(g2);
-				g.drawImage(img, 0, 0, null);
+				g2.translate(-imagex/2, -imagey/2);
+//				vecState.setGraphics(gg);
+//				Vec p = transform(pan);
+				g.drawImage(img, 0, 0, wallx, wally, 
+						(int)(-pan.x/zoom),(int)(-pan.y/zoom),
+						(int)((-pan.x+wallx)/zoom),(int)((-pan.y+wally)/zoom),
+						null);
 				if(walls){
 					Graphics2D gg = (Graphics2D)g;
 					transform(gg);
 					drawWalls(gg);
+//					drawWalls(g2);
 					invTransform(gg);
 				}
-//				vecState.setGraphics(gg);
+//				g.drawImage(img, 0, 0, null);
 				mouseHand.drawStates(g);
 				drawVecs(g);
 				if(trackedBall!=null)drawCrosshair(g);
-				invTransform(g2);
+//				invTransform(g2);
 			}
 		};
 		
@@ -666,11 +674,11 @@ public class PhysicsSim implements ChangeListener{
 	 * @param centre - the centre of the zooming(in the apparent view)
 	 */
 	public void zoom(double newZoom, Vec centre){
-		//centre is the position vector of zooming origin. Subtracting the pan away yields the position
-		//vector of an imaginary object at the zooming origin.
+		//centre is the position vector of zooming origin. Subtracting the pan away 
+		//yields the position vector of an imaginary object at the zooming origin.
 		//Dividing by zoom yields the actual position vector of an imaginary object
-		//as if it were at the mouse. Multiplying by newZoom gets the new apparent position vector
-		//with respect to zooming origin. The change in position of the object is
+		//as if it were at the mouse. Multiplying by newZoom gets the new apparent position 
+		//vector with respect to zooming origin. The change in position of the object is
 		//centre*(newZoom/zoom) - centre. Subtracting this from pan causes the object to
 		//be unmoved.
 		
@@ -882,6 +890,7 @@ public class PhysicsSim implements ChangeListener{
 		}
 //		updatePan();
 		System.out.println(wallMomentum/timesteps);
+//		System.out.println(zoom);
 		energyLab.setText(String.format("Kinetic Energy: %.8g", kineticEnergy()));
 	}
 	
