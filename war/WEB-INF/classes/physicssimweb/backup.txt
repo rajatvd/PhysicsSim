@@ -1,0 +1,5 @@
+  <inherits name="physicsengine.client.PhysicsEngine" />
+  <inherits name="physicsengine.client.Ball" />
+  <inherits name="physicsengine.client.RigidBody" />
+  <inherits name="physicsengine.client.Vec" />
+  <inherits name='graphicsengine.client.GraphicsEngine'/>
